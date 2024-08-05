@@ -84,9 +84,9 @@ l_0916:
 	bsr.w test_sprite
 	
 	;===============
-    ; Player 2 score
- 	;===============
-	; use address pointer as we can't write to rom 9 l_b1b8+1 )
+	; Player 2 score
+	;===============
+	; use address pointer as we can't write to rom ( l_b1b8+1 )
 	PUSH_SR
 	GET_ADDRESS	$0                   		; [sta l_b1b8+1] -- use first byte in ram.
 	move.b #$3e,(a0)							; start even
@@ -95,8 +95,8 @@ l_0916:
 	bsr.w	l_b1b4                           	; [jsr l_b1b4]
 	
 	;===================
-    ; Player 1 score
- 	;===================
+	; Player 1 score
+	;===================
 	PUSH_SR
 	GET_ADDRESS	$0                   		; [sta l_b1b8+1] -- use first byte in ram.
 	move.b	#$02,(a0)                        	; [...]
@@ -213,9 +213,9 @@ l_0a6f:
 	bsr.w l_b295
 	
 	
-	;=======================
-	;Designed and programmed
-	;=======================
+	;==========================
+	;Designed and programmed by
+	;==========================
 	move.w #gamedataTextDesignedBy,d2
 	move.b d2,d1
 	lsr.w #8,d2
@@ -348,9 +348,9 @@ l_2453:
 	rts                                    		; [rts]
 
 	
-	;=================
-	;Shadow generation
-	;=================
+	;=======================
+	;Mants Shadow generation
+	;=======================
 l_25e5:				
 	; 432 tiles * 32 ( bytes per tile )
 	SetVRAMWriteConst (vram_addr_tiles+size_tile_b)+tile_count*size_tile_b+sprite_count*size_tile_b
@@ -384,7 +384,7 @@ ShadowWriteLp:										; Start of shadow writing loop
 	rts
 
 	;====================================================
-	;renders row of characters d3 = tile index, d3 = rows
+	;Renders row of characters d3 = tile index, d3 = rows
 	;====================================================
 
 l_b189:
@@ -938,7 +938,7 @@ l_b360:
 	dc.b charRamHi+9,charRamHi+9,charRamHi+9,charRamHi+9
 	dc.b charRamHi+$a,charRamHi+$a,charRamHi+$a,charRamHi+$a
 	dc.b charRamHi+$b,charRamHi+$b,charRamHi+$b,charRamHi+$b
-	dc.b charRamHi+$c,charRamHi+$c
+	dc.b charRamHi+$c,charRamHi+$c,charRamHi+$c
 
 l_b379:
 	; Low Byte Video Address - The sega has 64 characters per row
@@ -948,12 +948,11 @@ l_b379:
 	dc.b $00,$40,$80,$c0
 	dc.b $00,$40,$80,$c0
 	dc.b $00,$40,$80,$c0
-	
 	dc.b $00,$40,$80,$c0
 	dc.b $00,$40,$80,$c0
 	dc.b $00,$40,$80,$c0
 	dc.b $00,$40,$80,$c0
-	dc.b $00,$40
+	dc.b $00,$40,$80
 	
 	; WIP
 l_b3b8:
