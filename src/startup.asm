@@ -4,7 +4,7 @@
 
 ROM_Start:
 
-	dc.l   $00FFE000			; Initial stack pointer value
+	dc.l   $00FFE000		; Initial stack pointer value
 	dc.l   CPU_EntryPoint		; Start of program
 	dc.l   CPU_Exception 		; Bus error
 	dc.l   CPU_Exception 		; Address error
@@ -33,7 +33,7 @@ ROM_Start:
 	dc.l   INT_Null			; IRQ level 2
 	dc.l   INT_Null			; IRQ level 3
 	dc.l   INT_HInterrupt		; IRQ level 4 (horizontal retrace interrupt)
-	dc.l   INT_Null  			; IRQ level 5
+	dc.l   INT_Null  		; IRQ level 5
 	dc.l   INT_VInterrupt		; IRQ level 6 (vertical retrace interrupt)
 	dc.l   INT_Null			; IRQ level 7
 	dc.l   INT_Null			; TRAP #00 exception
@@ -69,15 +69,15 @@ ROM_Start:
 	dc.l   INT_Null			; Unused (reserved)
 	dc.l   INT_Null			; Unused (reserved)
 
-	dc.b "SEGA MEGA DRIVE "                                 	; Console name
-	dc.b " "                                 					; Copyright holder and release date
-	dc.b " "														; Domestic name
-	dc.b " "														; International name
-	dc.b "v 0.1"                                   			; Version number
-	dc.w $0000                                             		; Checksum
-	dc.b "J               "                                 	; I/O support
-	dc.l ROM_Start                                          	; Start address of ROM
-	dc.l ROM_End-1                                          	; End address of ROM
+	dc.b "SEGA MEGA DRIVE "                                 ; Console name
+	dc.b " "                                 		; Copyright holder and release date
+	dc.b " "						; Domestic name
+	dc.b " "						; International name
+	dc.b "v 0.1"                                   		; Version number
+	dc.w $0000                                             	; Checksum
+	dc.b "J               "                                 ; I/O support
+	dc.l ROM_Start                                          ; Start address of ROM
+	dc.l ROM_End-1                                          ; End address of ROM
 	dc.l $00FF0000                                         	; Start address of RAM
 	dc.l $00FF0000+$0000FFFF                              	; End address of RAM
 	dc.l $00000000                                         	; SRAM enabled
@@ -87,7 +87,7 @@ ROM_Start:
 	dc.l $00000000                                         	; Unused
 	dc.l $00000000                                         	; Unused
 	dc.b "                                        "         ; Notes (unused)E
-	dc.b "  E             "                                 	; Country codes
+	dc.b "  E             "                                 ; Country codes
 
 	;==============================================================
 	; INITIAL VDP REGISTER VALUES
@@ -133,6 +133,19 @@ VDPRegisters:
 	; the code more readable.
 	;==============================================================
 	
+	
+pad_button_up    			equ $0
+pad_button_down  			equ $1
+pad_button_left  			equ $2
+pad_button_right 			equ $3
+pad_button_a     			equ $C
+pad_button_b     			equ $4
+pad_button_c     			equ $5
+pad_button_start 			equ $D
+
+pad_data_a					equ $00A10003
+pad_data_b					equ	$00A10005
+
 ; VDP port addresses
 vdp_control				equ $00C00004
 vdp_data					equ $00C00000
@@ -186,8 +199,8 @@ tmss_address				equ $00A14000
 tmss_signature				equ 'SEGA'
 
 ; The size of a word and longword
-size_word					equ 2
-size_long					equ 4
+size_word				equ 2
+size_long				equ 4
 
 ; The size of one palette (in bytes, words, and longwords)
 size_palette_b				equ $20
@@ -371,9 +384,9 @@ ClrVramLp:
 	; Write the palette to CRAM
 	lea    C64Palette,a0			; Move palette address to a0
 	move.w #size_palette_w*number_of_palettes-1,d0	; Loop counter = 8 words in palette (-1 for DBRA loop)
-PalLp:								; Start of loop
+PalLp:						; Start of loop
 	move.w (a0)+,vdp_data			; Write palette entry, post-increment address
-	dbra d0,PalLp					; Decrement d0 and loop until finished (when d0 reaches -1)
+	dbra d0,PalLp				; Decrement d0 and loop until finished (when d0 reaches -1)
 	
 	; Setup the VDP to write to VRAM address 0x0000 (the address of the first graphics tile, index 0)
 	SetVRAMWriteConst vram_addr_tiles
@@ -383,20 +396,20 @@ PalLp:								; Start of loop
 	;==============================================================
 	lea    UridiumCharSet,a0					; Move the address of the first graphics tile into a0
 	move.w #(tile_count*(size_tile_l))-1,d0	; Loop counter = 8 longwords per tile * num tiles (-1 for DBRA loop)
-CharLp:											; Start of loop
+CharLp:									; Start of loop
 	move.l (a0)+,vdp_data						; Write tile line (4 bytes per line), and post-increment address
-	dbra d0,CharLp								; Decrement d0 and loop until finished (when d0 reaches -1)
+	dbra d0,CharLp							; Decrement d0 and loop until finished (when d0 reaches -1)
 	
 	;==============================================================
 	; Write the sprites tiles to VRAM
 	;==============================================================
 	SetVRAMWriteConst (vram_addr_tiles+size_tile_b)+tile_count*size_tile_b
 	; Write the sprite tiles to VRAM
-	lea    SpritesManta,a0						; Move the address of the first graphics tile into a0
+	lea    SpritesManta,a0				; Move the address of the first graphics tile into a0
 	move.w #(sprite_count*(size_tile_l))-1,d0	; Loop counter = 8 longwords per tile * num tiles (-1 for DBRA loop)
-SpriteLp:										; Start of loop
-	move.l (a0)+,vdp_data						; Write tile line (4 bytes per line), and post-increment address
-	dbra d0,SpriteLp							; Decrement d0 and loop until finished (when d0 reaches -1)
+SpriteLp:						; Start of loop
+	move.l (a0)+,vdp_data				; Write tile line (4 bytes per line), and post-increment address
+	dbra d0,SpriteLp				; Decrement d0 and loop until finished (when d0 reaches -1)
 	
 
 	; just writing some garbage to the VRAM for debugging purposes - testing character generator
