@@ -153,7 +153,9 @@ vdp_debug					equ $00C0001C
 vdp_debug_mirror			equ $00C0001E
 
 ; VDP commands
+vdp_cmd_vram_read			equ $00000000
 vdp_cmd_vram_write			equ $40000000
+vdp_cmd_cram_read			equ $00000020
 vdp_cmd_cram_write			equ $C0000000
 
 ; VDP memory addresses
