@@ -39,7 +39,7 @@ VDP_LoadRegisters:
 	;   Y = value to write
 
 	; Set VDP registers
-	lea    VDPRegisters,a0	; Load address of register table into a0
+	lea    VDPRegisters,a0		; Load address of register table into a0
 	move.w #$18-1,d0			; 24 registers to write (-1 for loop counter)
 	move.w #$8000,d1			; 'Set register 0' command to d1
 
@@ -49,3 +49,12 @@ CopyRegLp:
 	addi.w #$0100,d1			; Increment register #
 	dbra   d0,CopyRegLp		; Decrement d0, and jump back to top of loop if d0 is still >= 0
 	rts
+
+ReadPad1:
+   move.b pad_data_a,d0    	; Read upper byte from data port
+   rol.w  #$8,d0          		; Move to upper byte of d0
+   move.b #$40,pad_data_a 		; Write bit 7 to data port
+   move.b pad_data_a,d0    	; Read lower byte from data port
+   move.b #$0,pad_data_a 		; Put data port back to normal
+   rts
+   
