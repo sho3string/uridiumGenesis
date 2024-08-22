@@ -23,28 +23,44 @@ Game:
 	
 	bsr.w CPUInit
 	
+	; dummy data for l_2e29 from 0x800 - may be used for RNG and star generation.
+	; 0xb5 0xff 0x01 0xb5 0xff 0x95 0xc9 0x18 0x95 0xca 0x69 0xca 0x10 0x95 0xcd 0xb4
+	move.l #$b5c249ff,$ff0800
+	move.l #$18690195,$ff0804 
+	move.l #$c2b5c349,$ff0808
+	move.l #$ff690095,$ff080c
+	move.l #$c3b5c949,$ff0810
+	move.l #$ff186901,$ff0814
+	move.l #$95c9b5ca,$ff0818
+	move.l #$49ff6900,$ff081c
+	move.l #$95ca4c2d,$ff0820
+	move.l #$10b5cc95,$ff0824
+	move.l #$c0b5cd95,$ff0828
+	move.l #$c1b4c688,$ff082c
+	
+	
 	;=================
 	; Change bg colour
 	;=================
-	move.b	#$00,d0                        		; select the palette colour
-	move.b	#palette_a,d1				; select the palette
+	move.b	#$00,d0								; select the palette colour
+	move.b	#palette_a,d1						; select the palette
 	PUSH_SR
-	GET_ADDRESS	$d021                     	; [sta $d021] background color
-	move.b	d0,(a0)                         	; [...]
+	GET_ADDRESS	$d021						; [sta $d021] background color
+	move.b	d0,(a0)								; [...]
 	POP_SR
 	
 	;=========
 	; Clear ZP
 	;=========
-	move.w	#$fe,d2                        		; [ldy #$fe] %11111110
-	clr.b	d0                               	; [lda #$00]
+	move.w	#$fe,d2 							; [ldy #$fe] %11111110
+	clr.b	d0									; [lda #$00]
 l_0916:
 	PUSH_SR
-	GET_ADDRESS $0001                     		; [sta $0001,y] clears zero page addresses from 0xff to 0x02
-    move.b	d0,(a0,d2.w)                 		; [...]
+	GET_ADDRESS $0001 							; [sta $0001,y] clears zero page addresses from 0xff to 0x02
+    move.b	d0,(a0,d2.w)						; [...]
 	POP_SR
-	subq.b	#1,d2                           	; [dey]
-	bne	l_0916                             	; [bne l_0916]
+	subq.b	#1,d2								; [dey]
+	bne	l_0916									; [bne l_0916]
 
 
 	; loads data from one table at $8000-$9fff and reproduces
@@ -59,27 +75,27 @@ l_0916:
 	move.w	#l_8000,d2
 	bsr.w	setupSourceCopy				; ROM source
 
-	move.w	#$e000,d2				; RAM - 0xFFE000
+	move.w	#$e000,d2						; RAM - 0xFFE000
 	bsr.w	setupDestinationCopy
 	
 	;move.w	#l_8000,d2
 	;bsr.w	setupSourceCopy				; ROM source
 
-	;move.w	#$8000,d2				; RAM - 0xFF8000
+	;move.w	#$8000,d2						; RAM - 0xFF8000
 	;bsr.w	setupDestinationCopy
 	
 
 	;==========
 	; Game init
 	;==========
-	bsr.w	l_25e5                            	; [jsr l_25e5] manta shadows generated here.
+	bsr.w	l_25e5							; [jsr l_25e5] manta shadows generated here.
 	
 	;clears the high score summary area, first 4 rows.
-	move.b	#$04,d3                        		; [ldx #$02]
-	move.b	#$30,d0                        		; [lda #$30] select tile
+	move.b	#$04,d3 						; [ldx #$02]
+	move.b	#$30,d0							; [lda #$30] select tile
 	lea vram_addr_plane_a,a1
 	SetVRAMWriteReg a1
-	bsr.w	l_b189                       		; [jsr l_b189] fills first 4 rows with d0
+	bsr.w	l_b189							; [jsr l_b189] fills first 4 rows with d0
 	; test sprite
 	bsr.w test_sprite
 	
@@ -88,25 +104,25 @@ l_0916:
 	;===============
 	; use address pointer as we can't write to rom ( l_b1b8+1 )
 	PUSH_SR
-	GET_ADDRESS	$0                   		; [sta l_b1b8+1] -- use first byte in ram.
-	move.b #$3e,(a0)				; start even
+	GET_ADDRESS	$0						; [sta l_b1b8+1] -- use first byte in ram.
+	move.b #$3e,(a0)						; start even
 	POP_SR
 	
-	bsr.w	l_b1b4                           	; [jsr l_b1b4]
+	bsr.w	l_b1b4 							; [jsr l_b1b4]
 	
 	;===================
 	; Player 1 score
 	;===================
 	PUSH_SR
-	GET_ADDRESS	$0                   		; [sta l_b1b8+1] -- use first byte in ram.
-	move.b	#$02,(a0)                        	; [...]
+	GET_ADDRESS	$0						; [sta l_b1b8+1] -- use first byte in ram.
+	move.b	#$02,(a0)						; [...]
 	POP_SR
-	bsr.w	l_b1b4                           	; [jsr l_b1b4]
+	bsr.w	l_b1b4							; [jsr l_b1b4]
 	
-	move.b	#$01,d0                        		; [lda #$01]
+	move.b	#$01,d0							; [lda #$01]
 	PUSH_SR
-	GET_ADDRESS	$5c                       	; [sta $5c]
-	move.b	d0,(a0)                         	; [...]
+	GET_ADDRESS	$5c						; [sta $5c]
+	move.b	d0,(a0)							; [...]
 	POP_SR
 
 l_0a20:	
@@ -122,7 +138,7 @@ l_0a20:
 	;generates player 1 text on screen
 	move.w	#gamedataTextP1,d2
 	move.b  d2,d1
-	lsr.w	#8,d2					; get high byte
+	lsr.w	#8,d2							; get high byte
 	bsr.w l_b295
 	
 	;===================
@@ -131,7 +147,7 @@ l_0a20:
 	;generates player 2 text on screen
 	move.w	#gamedataTextP2,d2 			; 0xc02
 	move.b  d2,d1
-	lsr.w	#8,d2					; get high byte
+	lsr.w	#8,d2							; get high byte
 	bsr.w l_b295
 	
 	;===================================
@@ -167,12 +183,23 @@ l_0a6f:
 	;Clear screen
 	;===================
 	move.b #$30,d0                        		; [lda #$30] - tile #
-	move.w #$4,d1					; start clearing screen 4 rows down
+	move.w #$4,d1								; start clearing screen 4 rows down
 	lsl.w #7,d1					; x 8
 	lea vram_addr_plane_a,a1					
 	add.w d1,a1
 	SetVRAMWriteReg a1
 	bsr.w	l_2397                            	; [jsr l_2397]
+	
+	; test
+	;SetVRAMWriteConst $C986
+	;move.w #$01,vdp_data
+	;SetVRAMWriteConst $C434
+	;move.w #$01,vdp_data
+	;SetVRAMWriteConst $CB3A
+	;move.w #$01,vdp_data
+	;SetVRAMWriteConst $C684
+	;move.w #$01,vdp_data
+	
 	
 	;=================
 	;Set color to text
@@ -244,12 +271,155 @@ l_0a6f:
 	
 	GET_ADDRESS	$18					; [lda $18] game state here
 	move.b	(a0),d0						; [...]
-	;bne	l_0ad4						; [bne l_0ad4] scrolling attract mode.
-	;jmp	l_0b65						; [jmp l_0b65] game starts here
-	jmp *
 	
+	;=================================
+	;Scrolling routine with large text
+	;=================================
+	bne	l_0ad4							; [bne l_0ad4] scrolling attract mode.
+	
+	;===================
+	;Player pressed fire
+	;When equal to zero
+	;===================
+	jmp	l_0b65							; [jmp l_0b65] game starts here
+	
+	;============================
+	;Pre demo - scrolling attract
+	;============================
+l_0ad4:
+	clr.b	d0							; [lda #$00]
+	PUSH_SR
+	GET_ADDRESS	$26					; [sta $26]
+	move.b	d0,(a0)						; [...]
+	POP_SR
+	move.b	#$0f,d0						; [lda #$0f]
+	PUSH_SR
+	GET_ADDRESS	$8d					; [sta $8d]
+	move.b	d0,(a0)						; [...]
+	POP_SR
+	bsr.s	l_20ec						; [jsr l_20ec]
+	move.b	#$fc,d0						; [lda #$fc]
+	PUSH_SR
+	GET_ADDRESS	$2e					; [sta $2e]
+	move.b	d0,(a0)						; [...]
+	POP_SR
+	bsr.w	l_217e						; [jsr l_217e]
+	GET_ADDRESS	$18					; [lda $18]
+	move.b	(a0),d0						; [...]
+	bne	l_0aed							; [bne l_0aed] - hall of fame screen.
+	jmp	l_0b65							; [jmp l_0b65] - init scores, player pressed fire
+	
+	;===================
+	;Hall Of Fame Screen
+	;===================
+	; to do.
+l_0aed:
+	
+l_0b65:
+	
+l_17e2:
+
 l_17cc:
 	rts
+	
+l_20ec:
+	bsr.w	l_2c66                            	; [jsr l_2c66]
+	move.b	#$40,d0                        		; [lda #$40]
+	PUSH_SR
+	GET_ADDRESS	$29                       	; [sta $29]
+	move.b	d0,(a0)                         	; [...]
+	POP_SR
+	move.b	#$f1,d0                        		; [lda #$f1]
+	PUSH_SR
+	GET_ADDRESS	$4a                       	; [sta $4a]
+	move.b	d0,(a0)                         	; [...]
+	POP_SR
+	clr.b	d0                               	; [lda #$00]
+	PUSH_SR
+	GET_ADDRESS	$2a                       	; [sta $2a]
+	move.b	d0,(a0)                         	; [...]
+	POP_SR
+	bsr.w	l_2cb2                            	; [jsr l_2cb2] - tested 95%
+	bsr.w	l_2ca5                            	; [jsr l_2ca5] - tested 100%
+	bsr.w	l_2f33                            	; [jsr l_2f33] - tested 0% color tables - to do
+	bsr.w	l_2e17                            	; [jsr l_2e17]
+	bsr.w	l_2beb                            	; [jsr l_2beb]
+	bsr.w	l_2ed7                            	; [jsr l_2ed7] - generate stars
+	jmp *
+	
+	bsr.w	l_2532                            	; [jsr l_2532] - 
+	move.b	#$fb,d0                        		; [lda #$fb]
+	PUSH_SR
+	GET_ADDRESS	$d025                     	; [sta $d025]
+	move.b	d0,(a0)                         	; [...]
+	POP_SR
+	clr.b	d0                               	; [lda #$00]
+	PUSH_SR
+	GET_ADDRESS	$34                       	; [sta $34]
+	move.b	d0,(a0)                         	; [...]
+	GET_ADDRESS	$2e                       	; [sta $2e]
+	move.b	d0,(a0)                         	; [...]
+	GET_ADDRESS	$3f                       	; [sta $3f]
+	move.b	d0,(a0)                         	; [...]
+	GET_ADDRESS	$47                       	; [sta $47]
+	move.b	d0,(a0)                         	; [...]
+	GET_ADDRESS	$46                       	; [sta $46]
+	move.b	d0,(a0)                         	; [...]
+	GET_ADDRESS	$3e                       	; [sta $3e]
+	move.b	d0,(a0)                         	; [...]
+	GET_ADDRESS	$32                       	; [sta $32]
+	move.b	d0,(a0)                         	; [...]
+	POP_SR
+	st.b	d0                                	; [lda #$ff]
+	PUSH_SR
+	GET_ADDRESS	$2d                       	; [sta $2d]
+	move.b	d0,(a0)                         	; [...]
+	POP_SR
+	move.b	#$10,d0								; [lda #$10]
+	PUSH_SR
+	GET_ADDRESS	$3d                       	; [sta $3d]
+	move.b	d0,(a0)                         	; [...]
+	POP_SR
+	move.b	#$05,d0								; [lda #$05]
+	PUSH_SR
+	GET_ADDRESS	$45                       	; [sta $45]
+	move.b	d0,(a0)                         	; [...]
+	POP_SR
+	move.b	#$59,d0                        		; [lda #$59]
+	PUSH_SR
+	GET_ADDRESS	$40                       	; [sta $40]
+	move.b	d0,(a0)                         	; [...]
+	POP_SR
+	move.b	#$98,d0                        		; [lda #$98]
+	PUSH_SR
+	GET_ADDRESS	$33                       	; [sta $33]
+	move.b	d0,(a0)                         	; [...]
+	POP_SR
+	move.b	#$01,d0                        		; [lda #$01]
+	PUSH_SR
+	GET_ADDRESS	$48                       	; [sta $48]
+	move.b	d0,(a0)                         	; [...]
+	POP_SR
+	GET_ADDRESS	$2936                     	; [lda $2936]
+	move.b	(a0),d0                         	; [...]
+	PUSH_SR
+	GET_ADDRESS	$49                       	; [sta $49]
+	move.b	d0,(a0)                         	; [...]
+	POP_SR
+	GET_ADDRESS	$4b                       	; [lda $4b]
+	move.b	(a0),d0                         	; [...]
+	;PUSH_SR
+	;GET_ADDRESS	$d02e                     ; [sta $d02e] sprite #7 color (only bits #0-#3).
+	;move.b	d0,(a0)                         	; [...]
+	;POP_SR
+	move.b	#$2f,d0                        		; [lda #$2f]
+	PUSH_SR
+	GET_ADDRESS	$3f4a                     	; [sta $3f4a] - to do.
+	move.b	d0,(a0)                         	; [...]
+	POP_SR
+	bsr.w	l_17e2                            	; [jsr l_17e2]
+	rts                                    		; [rts]
+
 	
 	;===================
 	; Attract mode setup
@@ -260,7 +430,7 @@ l_2150:
 	GET_ADDRESS	$59					; [sta $59]
 	move.b	d0,(a0)						; [...]
 	POP_SR
-	clr.b	d0                              		; [lda #$00]
+	clr.b	d0                          ; [lda #$00]
 	PUSH_SR
 	GET_ADDRESS	$62					; [sta $62]
 	move.b	d0,(a0)						; [...]
@@ -271,15 +441,15 @@ l_2150:
 	;=======================
 l_2158:
 	
-	bsr.w	l_b019                          		; [jsr l_b019] - check joy controls
-	bsr.w	l_b1fd                          		; [jsr l_b1fd] - read the keyboard 	- to do.
-	bsr.w	l_b31b                          		; [jsr l_b31b] - results of input to screen, volume, number of players - to do.
+	bsr.w	l_b019						; [jsr l_b019] - verify joy controls
+	bsr.w	l_b1fd						; [jsr l_b1fd] - read the keyboard 	- in progress.
+	bsr.w	l_b31b						; [jsr l_b31b] - results of input to screen, volume, number of players - to do.
 	
 	;=============
 	;Animation bar
 	;=============
 	bsr.w	l_22d3						; [jsr l_22d3]
-	bsr.w	l_2342							; [jsr l_2342]
+	bsr.w	l_2342						; [jsr l_2342]
 	bsr.w	l_23b5						; [jsr l_23b5]
 
 	move.b	#$0c,d2						; [ldy #$0c]
@@ -289,18 +459,18 @@ l_2158:
 	GET_ADDRESS	$18					; [lda $18]
 	move.b	(a0),d0						; [...]
 	beq.s	l_217d 						; [beq l_217d]
-	GET_ADDRESS	$62 					; [lda $62]
+	GET_ADDRESS	$62 				; [lda $62]
 	move.b	(a0),d0						; [...]
 	bne.s	l_2158 						; [bne l_2158]
 	GET_ADDRESS	$59					; [dec $59]
 	subq.b	#1,(a0)						; [...]
-	bne	l_2158						; [bne l_2158]
+	bne	l_2158							; [bne l_2158]
 	
 l_217d:
-	rts 							; [rts]
+	rts 								; [rts]
 
 l_217e:
-	clr.b	d0						; [lda #$00]
+	clr.b	d0							; [lda #$00]
 	PUSH_SR
 	GET_ADDRESS	$62					; [sta $62]
 	move.b	d0,(a0)						; [...]
@@ -308,96 +478,96 @@ l_217e:
 	
 l_2182:
 
-	GET_ADDRESS	$2f                       		; [lda $2f]
-	move.b	(a0),d0                         		; [...]
-	bne	l_2182                             		; [bne l_2182]
-	bsr.w	l_2b40                          		; [jsr l_2b40]
-	bsr.w	l_2beb                           		; [jsr l_2beb] scrolling routine and bullets for manta ?
-	;bsr.w	l_2ed7						; [jsr l_2ed7]
-	;bsr.w	l_2fc8						; [jsr l_2fc8]
-	bsr.w	l_b019                            		; [jsr l_b019] read joystick
-	bsr.w	l_b1fd                            		; [jsr l_b1fd] read keyboard
-	bsr.w	l_22d3                            		; [jsr l_22d3]
-	bsr.w	l_b31b                            		; [jsr l_b31b]
-	bsr.w	l_23b5                            		; [jsr l_23b5]
-	bsr.w	l_2342                            		; [jsr l_2342]
-	GET_ADDRESS	$62                       		; [inc $62]
-	addq.b	#1,(a0)                         		; [...]
-	GET_ADDRESS	$18                       		; [lda $18]
-	move.b	(a0),d0                         		; [...]
-	beq	l_21b4                             		; [beq l_21b4]
-	GET_ADDRESS	$2a                       		; [lda $2a]
-	move.b	(a0),d0                         		; [...]
-	cmp.b	#$0e,d0                         		; [cmp #$0e]
-	bcs	l_2182                             		; [bcc l_2182]
-	GET_ADDRESS	$29                       		; [lda $29]
-	move.b	(a0),d0                         		; [...]
-	bpl	l_2182                             		; [bpl l_2182]
+	GET_ADDRESS	$2f					; [lda $2f]
+	move.b	(a0),d0						; [...]
+	bne	l_2182							; [bne l_2182]
+	bsr.w	l_2b40						; [jsr l_2b40]
+	bsr.w	l_2beb						; [jsr l_2beb] - scrolling routine and bullets for manta ?
+	bsr.w	l_2ed7						; [jsr l_2ed7] - generate stars - in progress
+	bsr.w	l_2fc8						; [jsr l_2fc8] - to do
+	bsr.w	l_b019						; [jsr l_b019] - read joystick
+	bsr.w	l_b1fd						; [jsr l_b1fd] - read keyboard
+	bsr.w	l_22d3						; [jsr l_22d3]
+	bsr.w	l_b31b 						; [jsr l_b31b]
+	bsr.w	l_23b5						; [jsr l_23b5]
+	bsr.w	l_2342 						; [jsr l_2342]
+	GET_ADDRESS	$62					; [inc $62]
+	addq.b	#1,(a0)						; [...]
+	GET_ADDRESS	$18					; [lda $18]
+	move.b	(a0),d0						; [...]
+	beq	l_21b4							; [beq l_21b4]
+	GET_ADDRESS	$2a					; [lda $2a]
+	move.b	(a0),d0						; [...]
+	cmp.b	#$0e,d0						; [cmp #$0e]
+	bcs	l_2182							; [bcc l_2182]
+	GET_ADDRESS	$29					; [lda $29]
+	move.b	(a0),d0						; [...]
+	bpl	l_2182 							; [bpl l_2182]
 l_21b4:
-	rts                                    			; [rts]
+	rts 								; [rts]
 
 l_22d3:
-	GET_ADDRESS	$62                       		; [lda $62]
-	move.b	(a0),d0                         		; [...]
-	and.b	#$7f,d0                         		; [and #$7f]
-	bne	l_231c                             		; [bne l_231c]
-	GET_ADDRESS	$5b                       		; [lda $5b]
-	move.b	(a0),d0                         		; [...]
+	GET_ADDRESS	$62                 ; [lda $62]
+	move.b	(a0),d0                     ; [...]
+	and.b	#$7f,d0                     ; [and #$7f]
+	bne	l_231c                          ; [bne l_231c]
+	GET_ADDRESS	$5b                 ; [lda $5b]
+	move.b	(a0),d0                     ; [...]
 	PUSH_SR
-	GET_ADDRESS	$0f                       		; [sta $0f]
-	move.b	d0,(a0)                         		; [...]
+	GET_ADDRESS	$0f                 ; [sta $0f]
+	move.b	d0,(a0)                     ; [...]
 	POP_SR
-								; [clc]
-	add.b	#$01,d0                        			; [adc #$01]
-	and.b	#$03,d0                         		; [and #$03]
+										; [clc]
+	add.b	#$01,d0                     ; [adc #$01]
+	and.b	#$03,d0                     ; [and #$03]
 	PUSH_SR
-	GET_ADDRESS	$5b                       		; [sta $5b]
-	move.b	d0,(a0)                         		; [...]
+	GET_ADDRESS	$5b                 ; [sta $5b]
+	move.b	d0,(a0)                     ; [...]
 	POP_SR
-	beq	l_231d                             		; [beq l_231d]
-	GET_ADDRESS	$5a                       		; [lda $5a]
-	move.b	(a0),d0                         		; [...]
-	cmp.b	#$03,d0                         		; [cmp #$03]
-	beq	l_231d                             		; [beq l_231d]
-	GET_ADDRESS	$5b                       		; [lda $5b]
-	move.b	(a0),d0                         		; [...]
-	cmp.b	#$01,d0                         		; [cmp #$01]
-	beq	l_2325                             		; [beq l_2325]
-	cmp.b	#$02,d0                         		; [cmp #$02]
-	beq	l_232d                             		; [beq l_232d]
-	GET_ADDRESS	$5a                       		; [lda $5a]
-	move.b	(a0),d0                         		; [...]
-	cmp.b	#$02,d0                         		; [cmp #$02]
-	beq	l_2335                             		; [beq l_2335]
+	beq	l_231d                          ; [beq l_231d]
+	GET_ADDRESS	$5a                 ; [lda $5a]
+	move.b	(a0),d0                     ; [...]
+	cmp.b	#$03,d0                     ; [cmp #$03]
+	beq	l_231d                          ; [beq l_231d]
+	GET_ADDRESS	$5b                 ; [lda $5b]
+	move.b	(a0),d0                     ; [...]
+	cmp.b	#$01,d0                     ; [cmp #$01]
+	beq	l_2325                          ; [beq l_2325]
+	cmp.b	#$02,d0                     ; [cmp #$02]
+	beq	l_232d                          ; [beq l_232d]
+	GET_ADDRESS	$5a                 ; [lda $5a]
+	move.b	(a0),d0                     ; [...]
+	cmp.b	#$02,d0                     ; [cmp #$02]
+	beq	l_2335                          ; [beq l_2335]
 	
 l_22fc:
-	GET_ADDRESS	$5c                       		; [lda $5c]
-	move.b	(a0),d2                         		; [...]
-	;move.b	d0,d2                           		; [tay]
+	GET_ADDRESS	$5c                  ; [lda $5c]
+	move.b	(a0),d2                      ; [...]
+	;move.b	d0,d2                      ; [tay]
 	
-	lsl.w #2,d2						; 16bit address to 32bit
+	lsl.w #2,d2							 ; 16bit address to 32bit
 	move.l #l_3570,a0							
 	move.l	(a0,d2.w),d2
 	move.b d2,d1
 	lsr.w #8,d2
 	bsr.w l_b295
 
-	;GET_ADDRESS	$3573                     		; [lda $3573,y] - to do
-	;move.b	(a0,d2.w),d0                    		; [...]
-	;GET_ADDRESS	$3570                     		; [ldx $3570,y] - to do
-	;move.b	(a0,d2.w),d1                    		; [...]
-	;move.b	d0,d2                           		; [tay]
-	;bsr.w	l_b295                            		; [jsr l_b295]
+	;GET_ADDRESS	$3573                ; [lda $3573,y]
+	;move.b	(a0,d2.w),d0                ; [...]
+	;GET_ADDRESS	$3570                ; [ldx $3570,y]
+	;move.b	(a0,d2.w),d1                ; [...]
+	;move.b	d0,d2                       ; [tay]
+	;bsr.w	l_b295                       ; [jsr l_b295]
 	
-	GET_ADDRESS	$61                       		; [lda $61]
-	move.b	(a0),d0                         		; [...]
-	beq	l_2315                             		; [beq l_2315]
+	GET_ADDRESS	$61                    ; [lda $61]
+	move.b	(a0),d0                        ; [...]
+	beq	l_2315                             ; [beq l_2315]
 	
-	move.w #l_34f5,d2					; [ldx #$f5] , [ldy #$34]
+	move.w #l_34f5,d2						; [ldx #$f5] , [ldy #$34]
 	move.b d2,d1
 	lsr.w #8,d2
-	bsr.w l_b295						; [jsr l_b295]
-	rts                                    			; [rts]
+	bsr.w l_b295							; [jsr l_b295]
+	rts                                     ; [rts]
 	
 
 	;==========================
@@ -407,7 +577,7 @@ l_2315:
 	move.w #gameTextColour,d2				; [ldx #$f5] , [ldy #$34]
 	move.b d2,d1
 	lsr.w #8,d2
-	bsr.w l_b295						; [jsr l_b295]
+	bsr.w l_b295							; [jsr l_b295]
 l_231c:
 	rts
 	
@@ -415,11 +585,11 @@ l_231c:
 	;Animation Bar Uridium
 	;=====================
 l_231d:
-	move.w #gameTextUridium,d2				; [ldx #$f5] , [ldy #$34]
+	move.w #gameTextUridium,d2			; [ldx #$f5] , [ldy #$34]
 	move.b d2,d1
 	lsr.w #8,d2
 l_2321:
-	bsr.w l_b295						; [jsr l_b295]
+	bsr.w l_b295							; [jsr l_b295]
 	rts
 
 	;========================
@@ -447,19 +617,19 @@ l_232d:
 	;=============================
 l_2335:	
 	; to do.
-	;GET_ADDRESS	$26                       	; [ldy $26]
+	;GET_ADDRESS	$26                       ; [ldy $26]
 	;move.b	(a0),d2                         	; [...]
-	;GET_ADDRESS	$e050                     	; [ldx $e050,y]
+	;GET_ADDRESS	$e050                     ; [ldx $e050,y]
 	;move.b	(a0,d2.w),d1                    	; [...]
 	;GET_ADDRESS	$e060                    	; [lda $e060,y]
 	;move.b	(a0,d2.w),d0                    	; [...]
 	;move.b	d0,d2                           	; [tay]
-	;jbsr	l_b295                            	; [jsr l_b295]
+	;jbsr	l_b295                            ; [jsr l_b295]
 	
 	; to check this later
 	GET_ADDRESS	$26                       	; [ldy $26]
 	move.b	(a0),d2                         	; [...]
-	lea	$ffe050,a0                    		; [ldx $e050,y]
+	lea	$ffe050,a0                    			; [ldx $e050,y]
 	move.b	(a0,d2.w),d1
 	lea	$ffe060,a0
 	move.b	(a0,d2.w),d0  
@@ -471,25 +641,25 @@ l_2342:
 	GET_ADDRESS	$19                       	; [lda $19]
 	move.b	(a0),d0                         	; [...]
 	and.b	#$10,d0                         	; [and #$10]
-	beq	l_2351                             	; [beq l_2351]
+	beq	l_2351                             		; [beq l_2351]
 	GET_ADDRESS	$19                       	; [lda $19]
 	move.b	(a0),d0                         	; [...]
 	and.b	#$a0,d0                         	; [and #$a0]
 	cmp.b	#$80,d0                         	; [cmp #$80]
-	beq	l_237b                             	; [beq l_237b]
+	beq	l_237b                             		; [beq l_237b]
 	rts                                    		; [rts]
 	
 l_2351:	
 	;clr.b	d1                               	; [ldx #$00]
-	;move.b	#$dc,d2                        		; [ldy #$dc]
+	;move.b	#$dc,d2                        	; [ldy #$dc]
 	;PUSH_SR
-	;GET_ADDRESS	$b025                     	; [stx $b025]
+	;GET_ADDRESS	$b025                     ; [stx $b025]
 	;move.b	d1,(a0)                         	; [...]
 	;GET_ADDRESS	$b026                    	; [sty $b026]
 	;move.b	d2,(a0)                         	; [...]
 	;POP_SR
-	;move.b	#$01,d1                        		; [ldx #$01]
-	;move.b	#$dc,d2                        		; [ldy #$dc]
+	;move.b	#$01,d1                        	; [ldx #$01]
+	;move.b	#$dc,d2                        	; [ldy #$dc]
 	;PUSH_SR
 	;GET_ADDRESS	$b028                    	 ; [stx $b028]
 	;move.b	d1,(a0)                         	; [...]
@@ -677,15 +847,15 @@ l_2415:
 	move.b	d1,(a0)                         	; [...]
 	POP_SR
 l_241b:
-	GET_ADDRESS l_349f                     		; [ldy $349f,x]
+	GET_ADDRESS l_349f                     	; [ldy $349f,x]
 	move.b	(a0,d1.w),d2                    	; [...]
-	bmi	l_244d                             	; [bmi l_244d]
+	bmi	l_244d                             		; [bmi l_244d]
 l_2420:
-	GET_ADDRESS scrollTextData             		; [lda $c000,y]
-	move.b	(a0,d2.w),d0  ; 0x78			; [...]
-	CLR_XC_FLAGS					; [clc]		
+	GET_ADDRESS scrollTextData             	; [lda $c000,y]
+	move.b	(a0,d2.w),d0  						; 0x78			; [...]
+	CLR_XC_FLAGS								; [clc]		
 	move.b	#$60,d4	
-	addx.b	d4,d0          ; 0xD8            	 ; [adc #$60]
+	addx.b	d4,d0         						 ; 0xD8            	 ; [adc #$60]
 	
 	lea scrollTextData,a0
 	add.w d0,a0
@@ -697,7 +867,7 @@ l_2420:
 	POP_SR
 	
 	move.l d3,d0
-	lsr.w #8,d0					; get the high byte
+	lsr.w #8,d0									; get the high byte
 	
 	PUSH_SR
 	GET_ADDRESS	$1b                       	; [sta $1b]
@@ -709,9 +879,9 @@ l_2420:
 l_2432:
 	GET_ADDRESS_Y_ROM	$1a                     ; [lda ($1a),y] - from rom
 	move.b	(a0,d2.w),d0                    	; [...]
-	beq	l_243a                             	; [beq l_243a]
+	beq	l_243a                             		; [beq l_243a]
 	PUSH_SR
-	;GET_ADDRESS	l_8010                    	; [sta $8010,x] 
+	;GET_ADDRESS	l_8010                    ; [sta $8010,x] 
 	lea $FF8010,a0
     move.b	d0,(a0,d1.w)                 		; [...]
 	POP_SR
@@ -719,10 +889,10 @@ l_2432:
 l_243a:
 	addq.b	#1,d2                           	; [iny]
 	cmp.b	#$04,d2                         	; [cpy #$04]
-	bcs	l_2432                             	; [bcc l_2432]
+	bcs	l_2432                             		; [bcc l_2432]
 	move.b	#$01,d0                        		; [lda #$01]
 	PUSH_SR
-	;GET_ADDRESS	l_8010                    	; [sta $8010,x]
+	;GET_ADDRESS	l_8010                    ; [sta $8010,x]
 	lea $FF8010,a0
     move.b	d0,(a0,d1.w)                 		; [...]
 	POP_SR
@@ -735,7 +905,7 @@ l_243a:
 	addq.b	#1,(a0)                         	; [...]
 	GET_ADDRESS	$10                       	; [ldx $10]
 	move.b	(a0),d1                         	; [...]
-	bpl	l_241b                             	; [bpl l_241b]
+	bpl	l_241b                             		; [bpl l_241b]
 l_244d:
 	GET_ADDRESS	$11                       	; [ldx $11]
 	move.b	(a0),d1                         	; [...]
@@ -743,7 +913,7 @@ l_244d:
 	clr.w	d0                               	; [lda #$00]
 l_2453:
 	PUSH_SR
-	;GET_ADDRESS	l_8010                    	; [sta $8010,x]
+	;GET_ADDRESS	l_8010                    ; [sta $8010,x]
 	lea $FF8010,a0
     move.b	d0,(a0,d1.w)                 		; [...]
 	POP_SR
@@ -752,7 +922,8 @@ l_2453:
 	bpl	l_2453                             		; [bpl l_2453]
 	rts                                    		; [rts]
 
-	
+l_2532:
+
 	;=========================
 	;Manta's Shadow generation
 	;=========================
@@ -826,7 +997,7 @@ l_2b53:
 l_2b5d:
 	GET_ADDRESS	$29                       	; [lda $29]
 	move.b	(a0),d0                         	; [...]
-	SET_XC_FLAGS                           		; [sec]
+	SET_XC_FLAGS                           	; [sec]
 	GET_ADDRESS	$2e                       	; [sbc $2e]
 	SBC	(a0),d0   
 	PUSH_SR
@@ -843,9 +1014,10 @@ l_2b5d:
 	jmp	l_2b53                             	; [jmp l_2b53]
 
 l_2beb:
+
 	GET_ADDRESS	$29                       	; [lda $29]
 	move.b	(a0),d0                         	; [...]
-							; [clc]
+												; [clc]
 	add.b	#$07,d0                        		; [adc #$07]
 	PUSH_SR
 	GET_ADDRESS	$31                       	; [sta $31]
@@ -853,28 +1025,28 @@ l_2beb:
 	POP_SR
 	GET_ADDRESS	$2a                       	; [lda $2a]
 	move.b	(a0),d0                         	; [...]
-	move.b	#$00,d4	;	addx.b	#$00,d0         ; [adc #$00]
+	move.b	#$00,d4								; addx.b	#$00,d0         ; [adc #$00]
 	addx.b	d4,d0                        		; [adc #$00]
 	lsr.b	#1,d0                            	; [lsr a]
 	GET_ADDRESS	$31                       	; [ror $31]
-	move.b	(a0),d4	;	roxr.b	#1,(a0)         ; [...]
+	move.b	(a0),d4								; roxr.b	#1,(a0)         ; [...]
 	roxr.b	#1,d4                         		; [...]
 	PUSH_SR
-	move.b	d4,(a0)	;	roxr.b	#1,(a0)         ; [...]
+	move.b	d4,(a0)								; roxr.b	#1,(a0)         ; [...]
 	POP_SR
 	lsr.b	#1,d0                            	; [lsr a]
 	GET_ADDRESS	$31                       	; [ror $31]
-	move.b	(a0),d4	;	roxr.b	#1,(a0)         ; [...]
+	move.b	(a0),d4								; roxr.b	#1,(a0)         ; [...]
 	roxr.b	#1,d4                         		; [...]
 	PUSH_SR
-	move.b	d4,(a0)					; roxr.b	#1,(a0)
+	move.b	d4,(a0)								; roxr.b	#1,(a0)
 	POP_SR
 	lsr.b	#1,d0                            	; [lsr a]
 	GET_ADDRESS	$31                       	; [ror $31]
-	move.b	(a0),d4					; roxr.b	#1,(a0)            
+	move.b	(a0),d4								; roxr.b	#1,(a0)            
 	roxr.b	#1,d4                         		; [...]
 	PUSH_SR
-	move.b	d4,(a0)					; roxr.b	#1,(a0) ; [...]
+	move.b	d4,(a0)								; roxr.b	#1,(a0) ; [...]
 	POP_SR
 	and.b	#$01,d0                         	; [and #$01]
 	PUSH_SR
@@ -887,76 +1059,125 @@ l_2beb:
 	PUSH_SR
 	GET_ADDRESS	$30                       	; [sta $30]
 	move.b	d0,(a0)                         	; [...]
-	GET_ADDRESS	l_2c1f+2			; [sta $2c21] , high byte address of 0x8200
-	move.b	d0,(a0)                         	; [...]
+	
+	; use pointers to ram to handle self modifying code
+	;GET_ADDRESS	l_2c1f+2					; [sta $2c21] , high byte address of 0x8200
+	;move.b	d0,(a0)                         	; [...]
+	lea $ff0100+$2,a0
+	move.b	d0,(a0)								; high byte in
+	
 	POP_SR
 	GET_ADDRESS	$31                       	; [lda $31]
 	move.b	(a0),d0                         	; [...]
-	PUSH_SR
-	GET_ADDRESS	l_2c1f+1			; [sta $2c20] , low byte address of 0x8200
-	move.b	d0,(a0)                         	; [...]
-	POP_SR
-	move.b	#$48,d0					; [lda #$48]
-	PUSH_SR
-	GET_ADDRESS	l_2c1f+5			; [sta $2c24] , high byte address of 0x48f0
-	move.b	d0,(a0)					; [...]
-	POP_SR
-	move.b	#$f0,d0                        		; [lda #$f0]
-	PUSH_SR
-	GET_ADDRESS	l_2c1f+4			; [sta $2c23] , low byte address of 0x48f0
-	move.b	d0,(a0)                         	; [...]
-	POP_SR
-	move.b	#$11,d1                        		; [ldx #$11]
 	
-l_2c1d:
-	move.b	#$26,d2                        		; [ldy #$26]
-l_2c1f:
-	GET_ADDRESS	$8200                     	; [lda $8200,y]
-	move.b	(a0,d2.w),d0                    	; [...]
 	PUSH_SR
-	GET_ADDRESS	$48f0                     	; [sta $48f0,y]
-    move.b	d0,(a0,d2.w)                 		; [...]
-	POP_SR
-	subq.b	#1,d2                           	; [dey]
-	bpl	l_2c1f                             	; [bpl l_2c1f]
-	subq.b	#1,d1                           	; [dex]
-	beq	l_2c42                             	; [beq l_2c42]
-	GET_ADDRESS	$2c21                     	; [inc $2c21]
-	addq.b	#1,(a0)                         	; [...]
-	GET_ADDRESS	$2c21                     	; [inc $2c21]
-	addq.b	#1,(a0)                         	; [...]
-	GET_ADDRESS	$2c23                     	; [lda $2c23]
-	move.b	(a0),d0                         	; [...]
-							; [clc]
-	add.b	#$28,d0                        		; [adc #$28]
-	PUSH_SR
-	GET_ADDRESS	$2c23                     	; [sta $2c23]
+	lea $ff0100+$1,a0							; [sta $2c20] , low byte address of 0x8200
 	move.b	d0,(a0)                         	; [...]
 	POP_SR
-	bcc	l_2c1d                                  ; [bcc l_2c1d]
-	GET_ADDRESS	$2c24                     	; [inc $2c24]
-	addq.b	#1,(a0)                         	; [...]
-	jmp	l_2c1d                                  ; [jmp l_2c1d]
-	rts
-
+	move.b	#$c3,d0								; [lda #$48]  , use vram address on sega
+	PUSH_SR
+	lea $ff0100+$5,a0							; [sta $2c24] , high byte address of 0x48f0
+	move.b	d0,(a0)								; [...]
+	POP_SR
+	move.b	#$00,d0                        		; [lda #$f0],
+	PUSH_SR
+	lea $ff0100+$4,a0							; [sta $2c23] , low byte address of 0x48f0
+	move.b	d0,(a0)                         	; [...]
+	POP_SR
+	
+	move.w	#$11,d1                        		; [ldx #$11]	 ; 17 rows of playfield to render
+l_2c1d:
+	;move.w	#$26,d2                        	; [ldy #$26] 	 ; start at offset 26 ( right hand of screen )
+	move.w	#$4e,d2 							; each character is 2 bytes on the sega
+l_2c1f:
+	lea $ff8200,a0                    			; [lda $8200,y] ; tile data.
+	move.b	(a0,d2.w),d0                    	; [...]
+	
+	; row address
+	; 1		c300
+	; 2		c340
+	; 3		c380
+	; 4		c3c0
+	; 5		c400
+	; 6		c440
+	; 7		c480
+	; 8		c4c0
+	; 9		c500
+	; a		c540
+	; b		c580
+	; c		c5c0
+	; d		c600
+	; e		c640
+	; f		c680
+	; 10	c6c0
+	; 11	c700
+	
+	;PUSH_SR
+	clr.w	d4
+	clr.w 	d5
+	move.b $ff0100+$5,d5						; high
+	ror.w #8,d5
+	move.b $ff0100+$4,d4						; low
+	add.w d4,d5
+	move.l	d5,a0
+	
+	; set vram address
+	add.w d2,a0
+	SetVRAMWriteReg a0
+	move.w d0,vdp_data							; [sta $48f0,y] render playfield
+	
+	;POP_SR
+	subq.b	#2,d2                           	; [dey]			  2 bytes per character
+	bpl	l_2c1f                             		; [bpl l_2c1f]
+	subq.b	#1,d1                           	; [dex]
+	beq	l_2c42                             		; [beq l_2c42]
+	
+	;lea $ff0100+$2,a0                  	 	; [inc $2c21]
+	;addq.b	#1,(a0)                         	; [...]
+	;lea $ff0100+$2,a0                 		; [inc $2c21]
+	;addq.b	#1,(a0)                         	; [...]
+	lea $ff0100+$2,a0
+	addq.b	#2,(a0)
+	
+	;lea $ff0100+$4,a0                 		; [lda $2c23]
+	;move.b	(a0),d0                         	; [...]
+												; [clc]       	
+	;add.b	#$40,d0								; [adc #$28]	next row
+	
+	move.b $ff0100+$5,d5
+	ror.w #8,d5
+	move.b $ff0100+$4,d5
+	add.w #$80,d5
+				
+	ror.w   #8,d5      							; Rotate right by 8 bits, swapping the two bytes in the lower word
+	move.w	d5,$ff0104
+	
+	;PUSH_SR
+	;lea $ff0100+$4,a0                    	; [sta $2c23]
+	;move.b	d0,(a0)                         	; [...]
+	;POP_SR
+	;bcc	l_2c1d                           ; [bcc l_2c1d]
+	;lea $ff0100+$5,a0                    	; [inc $2c24]
+	;addq.b	#1,(a0)                         	; [...]
+	jmp	l_2c1d                                 ; [jmp l_2c1d]
+	
 l_2c42:
 	GET_ADDRESS	$31                       	; [lda $31]
 	move.b	(a0),d0                         	; [...]
-							; [clc]
+												; [clc]
 	add.b	#$12,d0                        		; [adc #$12]
 	PUSH_SR
 	GET_ADDRESS	$52                       	; [sta $52]
 	move.b	d0,(a0)                         	; [...]
 	GET_ADDRESS	$33                       	; [lda $33]
 	move.b	(a0),d0                         	; [...]
-	SET_XC_FLAGS                           		; [sec]
-	SBC_IMM	$58                           		; [sbc #$58]
+	SET_XC_FLAGS                           	; [sec]
+	SBC_IMM	 $58                           		; [sbc #$58]
 	and.b	#$f8,d0                         	; [and #$f8]
-	lsr.b	#1,d0                            	; [lsr a]
-	lsr.b	#1,d0                            	; [lsr a]
+	lsr.b	#2,d0
 	POP_SR                                 		; [plp]
 	GET_ADDRESS	$30                       	; [adc $30]
-	move.b	(a0),d4					; addx.b (a0),d0
+	move.b	(a0),d4								; addx.b (a0),d0
 	addx.b	d4,d0                         		; [...]
 	PUSH_SR
 	GET_ADDRESS	$53                       	; [sta $53]
@@ -972,13 +1193,1086 @@ l_2c42:
 	GET_ADDRESS	$50                       	; [sta $50]
 	move.b	d0,(a0)                         	; [...]
 	POP_SR
-							; [clc]
+												; [clc]
 	add.b	#$14,d0                        		; [adc #$14]
 	PUSH_SR
 	GET_ADDRESS	$51                       	; [sta $51]
 	move.b	d0,(a0)                         	; [...]
 	POP_SR
 	rts                                    		; [rts]
+
+l_2c66:
+	;clr.w	d1                               	; [ldx #$00]
+	move.w	#$20,d1								; address table at e050 uses 32 bit addresses so need to move 20 bytes further down 
+	move.w	#$e1,d2                        		; [ldy #$e1]
+	PUSH_SR
+	GET_ADDRESS	$1a                       	; [stx $1a]
+	move.b	d1,(a0)                         	; [...]
+	GET_ADDRESS	$1b                       	; [sty $1b]
+	move.b	d2,(a0)                         	; [...]
+	POP_SR
+	move.w	#$01,d1                        		; [ldx #$01]
+
+l_2c70:
+	clr.w	d2                               	; [ldy #$00]
+	PUSH_SR
+	GET_ADDRESS	$11                       	; [sty $11]
+	move.b	d2,(a0)                         	; [...]
+	POP_SR
+	GET_ADDRESS	$1a                       	; [lda $1a]
+	move.b	(a0),d0                         	; [...]
+	
+	; create address table low
+	PUSH_SR
+	;GET_ADDRESS	$a400                     ; [sta $a400,x]
+	lea $ffa400,a0
+    move.b	d0,(a0,d1.w)                 		; [...]
+	POP_SR
+	GET_ADDRESS	$1b                       	; [lda $1b]
+	move.b	(a0),d0                         	; [...]
+	
+	; create address table high
+	PUSH_SR
+	;GET_ADDRESS	$a500                     ; [sta $a500,x]
+	lea $ffa500,a0
+    move.b	d0,(a0,d1.w)                 		; [...]
+	POP_SR
+	addq.b	#1,d1                           	; [inx]
+	beq	l_2ca4                             		; [beq l_2ca4]
+	GET_ADDRESS_Y	$1a                     	; [lda ($1a),y]
+
+	move.b	(a0,d2.w),d0                    	; [...]
+	beq	l_2ca4                             		; [beq l_2ca4]
+	PUSH_SR
+	GET_ADDRESS	$8f                       	; [sta $8f]
+	move.b	d0,(a0)                         	; [...]
+	POP_SR
+	GET_ADDRESS	$11                       	; [inc $11]
+	addq.b	#1,(a0)                         	; [...]
+l_2c89:
+	GET_ADDRESS	$11                       	; [ldy $11]
+	move.b	(a0),d2                         	; [...]
+	GET_ADDRESS_Y	$1a                     	; [lda ($1a),y]
+	move.b	(a0,d2.w),d0                    	; [...]
+	SET_XC_FLAGS                           	; [sec]
+	GET_ADDRESS	$11                       	; [adc $11]
+	move.b	(a0),d4	;	addx.b	(a0),d0                         	; [...]
+	addx.b	d4,d0                         	; [...]
+	PUSH_SR
+	GET_ADDRESS	$11                       	; [sta $11]
+	move.b	d0,(a0)                         	; [...]
+	POP_SR
+	GET_ADDRESS	$8f                       	; [dec $8f]
+	subq.b	#1,(a0)                         	; [...]
+	bne	l_2c89                             	; [bne l_2c89]
+	GET_ADDRESS	$1a                       	; [lda $1a]
+	move.b	(a0),d0                         	; [...]
+	CLR_XC_FLAGS                           	; [clc]
+	GET_ADDRESS	$11                       	; [adc $11]
+	move.b	(a0),d4	;	addx.b	(a0),d0                         	; [...]
+	addx.b	d4,d0                         	; [...]
+	PUSH_SR
+	GET_ADDRESS	$1a                       	; [sta $1a]
+	move.b	d0,(a0)                         	; [...]
+	POP_SR
+	bcc	l_2c70                             	; [bcc l_2c70]
+	GET_ADDRESS	$1b                       	; [inc $1b]
+	addq.b	#1,(a0)                         	; [...]
+	jmp	l_2c70                             	; [jmp l_2c70
+
+l_2ca4:
+	rts
+	;===================
+	; Clear A400 to A4ff
+	; "" A500 to A5ff
+	;===================
+l_2ca5:
+	clr.w	d0                               	; [lda #$00]
+	move.w	d0,d2                           	; [tay]
+l_2ca8:
+	PUSH_SR
+	;GET_ADDRESS	$a400                     ; [sta $a400,y]
+	lea $ffa400,a0
+	move.b	d0,(a0,d2.w)                 	; [...]
+	;GET_ADDRESS	$a500                     	; [sta $a500,y]
+	lea $ffa500,a0
+    move.b	d0,(a0,d2.w)                 	; [...]
+	POP_SR
+	addq.b	#1,d2                           	; [iny]
+	bne	l_2ca8                             	; [bne l_2ca8]
+	rts                                    	; [rts]
+	
+
+l_2cb2:
+	move.b #$ff,d0                             ; [lda #$ff]
+	PUSH_SR
+	GET_ADDRESS	$54                       	; [sta $54]
+	move.b	d0,(a0)                         	; [...]
+	POP_SR
+	GET_ADDRESS	$26                       	; [lda $26]
+	move.b	(a0),d0                         	; [...]
+	and.b	#$0f,d0                         	; [and #$0f]
+	move.b	d0,d2                           	; [tay]
+	;GET_ADDRESS	$e010                     	; [lda $e010,y]
+	lea $ffe010,a0
+	move.b	(a0,d2.w),d0                    	; [...]
+	PUSH_SR
+	GET_ADDRESS	$12                       	; [sta $12]
+	move.b	d0,(a0)                         	; [...]
+	POP_SR
+	;GET_ADDRESS	$e020                     	; [lda $e020,y]
+	lea $ffe020,a0
+	move.b	(a0,d2.w),d0                    	; [...]
+	PUSH_SR
+	GET_ADDRESS	$13                       	; [sta $13]
+	move.b	d0,(a0)                         	; [...]
+	POP_SR
+	move.b	#$a2,d0                        	; [lda #$a2]
+	PUSH_SR
+	GET_ADDRESS	$15                       	; [sta $15]
+	move.b	d0,(a0)                         	; [...]
+	POP_SR
+	clr.b	d0                               	; [lda #$00]
+	PUSH_SR
+	GET_ADDRESS	$14                       	; [sta $14]
+	move.b	d0,(a0)                         	; [...]
+	POP_SR
+
+	;====================
+	;Clears the playfield
+	;Prior to scrolling.
+	;====================
+l_2ccd: ; 0x12ec
+	move.w	#$3f,d2                        	; [ldy #$3f]
+	move.b	#$20,d0                        	; [lda #$20] - blank tile.
+l_2cd1:
+	PUSH_SR
+	GET_ADDRESS_Y	$14                     	; [sta ($14),y]
+	move.b	d0,(a0,d2.w)                    	; [...] 
+	POP_SR
+	subq.b	#1,d2                           	; [dey]
+	bpl	l_2cd1                             	; [bpl l_2cd1]
+	GET_ADDRESS	$15                       	; [dec $15]
+	subq.b	#1,(a0)                         	; [...]
+	GET_ADDRESS	$15                       	; [dec $15]
+	subq.b	#1,(a0)                         	; [...]
+	GET_ADDRESS	$15                       	; [lda $15]
+	move.b	(a0),d0                         	; [...]
+	cmp.b	#$82,d0                         	; [cmp #$82]
+	bcc	l_2ccd                             	; [bcs l_2ccd]
+	
+	
+	
+	move.b	#$40,d1                        		; [ldx #$40]
+	move.b	#$a2,d2                        		; [ldy #$a2]
+	PUSH_SR
+	GET_ADDRESS	$14                       	; [stx $14]
+	move.b	d1,(a0)                         	; [...]
+	GET_ADDRESS	$15                       	; [sty $15]
+	move.b	d2,(a0)                         	; [...]
+	POP_SR
+	
+	;===============================
+	;Gets addr pointers to char data
+	;structs created previously
+	;===============================
+
+l_2ce8:
+	clr.w	d2                               	; [ldy #$00]
+	GET_ADDRESS_Y	$12                     	; [lda ($12),y] ; 0x8010 on c64
+	move.b	(a0,d2.w),d0                    	; [...]			 ; get index - 0x3e
+	beq	l_2d57                             		; [beq l_2d57]	 ; are we done copying data ? - bp addr 0x13c0
+
+	move.b	d0,d1                           	; [tax]		     ; index
+	GET_ADDRESS	$ffa500                    ; [lda $a500,x] ; into 0xa500
+	move.b	(a0,d1.w),d0                    	; [...]
+	PUSH_SR
+	GET_ADDRESS	$1b                       	; [sta $1b]
+	move.b	d0,(a0)                         	; [...]
+	POP_SR
+	GET_ADDRESS	$ffa400                     ; [lda $a400,x]
+	move.b	(a0,d1.w),d0                    	; [...]
+	PUSH_SR
+	GET_ADDRESS	$1a                       	; [sta $1a]
+	move.b	d0,(a0)                         	; [...]
+	POP_SR
+	CLR_XC_FLAGS                           	; [clc]
+	GET_ADDRESS	$12                       	; [lda $12]
+	move.b	(a0),d0                         	; [...]
+	move.b	#$01,d4								;	addx.b	#$01,d0   ; [adc #$01]
+	addx.b	d4,d0                        		; [adc #$01]
+	PUSH_SR
+	GET_ADDRESS	$12                       	; [sta $12]
+	move.b	d0,(a0)                         	; [...]
+	POP_SR
+	bcc	l_2d04                             		; [bcc l_2d04]
+	GET_ADDRESS	$13                       	; [inc $13]
+	addq.b	#1,(a0)                         	; [...]
+l_2d04:
+	GET_ADDRESS_Y	$1a                     	; [lda ($1a),y] ;Number of columns of items in struct.
+	move.b	(a0,d2.w),d0                    	; [...]
+	addq.b	#1,d2                           	; [iny]
+	PUSH_SR
+	GET_ADDRESS	$8f                       	; [sta $8f]
+	move.b	d0,(a0)                         	; [...]
+	POP_SR
+l_2d09:
+	GET_ADDRESS	$14                       	; [lda $14]
+	move.b	(a0),d0                         	; [...]
+	PUSH_SR
+	GET_ADDRESS	$1c                       	; [sta $1c]
+	move.b	d0,(a0)                         	; [...]
+	POP_SR
+	GET_ADDRESS	$15                       	; [lda $15]
+	move.b	(a0),d0                         	; [...]
+	PUSH_SR
+	GET_ADDRESS	$1d                       	; [sta $1d]
+	move.b	d0,(a0)                         	; [...]
+	POP_SR
+	GET_ADDRESS_Y	$1a                     	; [lda ($1a),y]
+	move.b	(a0,d2.w),d0                    	; [...]
+	addq.b	#1,d2                           	; [iny]
+	and.b	#$1f,d0                         	; [and #$1f]
+	
+	;when x/d0 = 8 or any other number, this is the start row index for scroll text.
+	;Dreadnought can be any width so X determines this
+	move.b	d0,d1                           	; [tax]
+
+
+	;======================================================	
+	;Tiles for the large scroll text and also the main ship
+	;======================================================
+
+	;=====================================================		
+	;Below data for U letter in Uridium.
+	;Starts from the left, bottom tile first.
+	;1 column has 8 rows.
+
+	;Some of the data for the U
+	;0x30,0x22,0x22,0x22,0x22,0x22,0x22,0x23 
+	;to A240,A040,9E40,9C40,9A40,9840,9640,9440
+
+	;0x32,0x25,0x25,0x25,0x25,0x25,0x25,0x26
+	;.. A241,A041,9E41,9C41,9A41,9841,9641,9441
+
+	;0x24,0x25,0x25,0x25,0x25,0x25,0x25,0x26
+	;.. A242,A042,9E42,9C42,9A42,9842,9642,9442
+
+	;       _ 
+	;0x9440	|  <- row 12 - 0x23
+	;0x9640	|  <- row 13 - 0x22
+	;0x9840	|  <- row 14 - 0x22
+	;0x9a40	|  <- row 15 - 0x22
+	;0x9c40	|  <- row 16 - 0x22
+	;0x9e40	|  <- row 17 - 0x22
+	;0xa040	|  <- row 18 - 0x22
+	;0xa240	 ` <- row 19 - 0x30
+
+	;============================
+	;Data for dreadnought - Gold.
+	;============================
+
+	;Some of the data for the Dreadnought
+	;0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20
+	;A240,A040,9E40,9C40,9A40,9840,9640,9440
+
+	;0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20
+	;.. A241,A041,9E41,9C41,9A41,9841,9641,9441
+
+	;0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20
+	;.. A242,A042,9E42,9C42,9A42,9842,9642,9442
+
+	;0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20 
+	;.. A243,A043,9E43,9C43,9A43,9843,9643,9443
+
+	;0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20 
+	;.. A244,A044,9E44,9C44,9A44,9844,9644,9444
+
+	;0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20 
+	;.. A245,A045,9E45,9C45,9A45,9845,9645,9445
+
+	;0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20 
+	;.. A246,A046,9E46,9C46,9A46,9846,9646,9446
+
+	;0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20 
+	;.. A247,A047,9E47,9C47,9A47,9847,9647,9447
+
+	;0x20,0x30,0x22,0x22,0x22,0x22,0x22,0x22,0x22,0x22,0x22,0x22,0x22,0x22,0x22,0x2b
+	;.. A248,A048,9E48,9C48,9A48,9848,9648,9448,9248,9048,8e48,8c48,8a48,8848,8648,8448
+
+	;0x20,0x32,0x25,0x25,0x25,0x25,0x25,0x25,0x25,0x25,0x25,0x25,0x25,0x25,0x25,0x2c
+	;.. A249,A049,9E49,9C49,9A49,9849,9649,9449,9249,9049,8e49,8c49,8a49,8849,8649,8449
+
+	;0x30,0x31,0x25,0x25,0x25,0x25,0x25,0x25,0x25,0x25,0x25,0x25,0x25,0x25,0x25,0x2a
+	;.. A24a,A04a,9E4a,9C4a,9A4a,984a,964a,944a,924a,904a,8e4a,8c4a,8a4a,884a,864a,844a
+
+
+	;0x8448	/
+	;0x8648	|
+	;0x8848	|
+	;0x8a48	|
+	;0x8c48	|
+	;0x8e48	|
+	;0x9048	|
+	;0x9248	|
+	;0x9448	|
+	;0x9648	|
+	;0x9848	|
+	;0x9a48	|
+	;0x9c48	|
+	;0x9e48	|
+	;0xa048	`
+	;0xa248	 
+
+l_2d17:
+	GET_ADDRESS_Y	$1a                     	; [lda ($1a),y]
+	move.b	(a0,d2.w),d0                    	; [...]
+	addq.b	#1,d2                           	; [iny]
+	PUSH_SR
+	GET_ADDRESS	$11                       	; [sty $11]
+	move.b	d2,(a0)                         	; [...]
+	POP_SR
+	clr.w	d2                               	; [ldy #$00]
+	PUSH_SR
+	GET_ADDRESS_Y	$1c                     	; [sta ($1c),y]
+	move.b	d0,(a0,d2.w)                    	; [...]
+	POP_SR
+	GET_ADDRESS	$11                       	; [ldy $11]
+	move.b	(a0),d2                         	; [...]
+	GET_ADDRESS	$1d                       	; [dec $1d]
+	subq.b	#1,(a0)                         	; [...]
+	GET_ADDRESS	$1d                       	; [dec $1d]
+	subq.b	#1,(a0)                         	; [...]
+	subq.b	#1,d1                           	; [dex]
+	bne	l_2d17                             		; [bne l_2d17]
+	
+	
+l_2d29:
+	;have we finished coping ?
+	GET_ADDRESS	$1d                       	; [lda $1d]
+	move.b	(a0),d0                         	; [...]
+	cmp.b	#$82,d0                         	; [cmp #$82]
+	bcs	l_2d40                             		; [bcc l_2d40]
+	PUSH_SR
+	GET_ADDRESS	$11                       	; [sty $11]
+	move.b	d2,(a0)                         	; [...]
+	POP_SR
+	clr.w	d2                               	; [ldy #$00]
+	move.b	#$20,d0                        		; [lda #$20]
+	PUSH_SR
+	GET_ADDRESS_Y	$1c                     	; [sta ($1c),y]
+	move.b	d0,(a0,d2.w)                    	; [...]
+	POP_SR
+	GET_ADDRESS	$11                       	; [ldy $11]
+	move.b	(a0),d2                         	; [...]
+	GET_ADDRESS	$1d                       	; [dec $1d]
+	subq.b	#1,(a0)                         	; [...]
+	GET_ADDRESS	$1d                       	; [dec $1d]
+	subq.b	#1,(a0)                         	; [...]
+	jmp	l_2d29                             		; [jmp l_2d29]
+l_2d40:
+	CLR_XC_FLAGS                           	; [clc]
+	GET_ADDRESS	$14                       	; [lda $14]
+	
+	; move to index the next column. On second pass, 0xa240 becomes 0xa241 for the letter U
+	move.b	(a0),d0                         	; [...]
+	move.b	#$01,d4								;	addx.b	#$01,d0  ; [adc #$01]
+	addx.b	d4,d0                        		; [adc #$01]
+	PUSH_SR
+	GET_ADDRESS	$14                       	; [sta $14]
+	move.b	d0,(a0)                         	; [...]
+	POP_SR
+	bcc	l_2d4b                             		; [bcc l_2d4b]
+	GET_ADDRESS	$15                       	; [inc $15]
+	addq.b	#1,(a0)                         	; [...]
+l_2d4b:
+	GET_ADDRESS	$15                       	; [lda $15]
+	move.b	(a0),d0                         	; [...]
+	cmp.b	#$a4,d0                         	; [cmp #$a4]
+	bcc	l_2d66                             		; [bcs l_2d66]
+	GET_ADDRESS	$8f                       	; [dec $8f]
+	subq.b	#1,(a0)                         	; [...]
+	;render the next column for the letter U
+	bne	l_2d09                             		; [bne l_2d09]
+	;next struct / second half of large letter
+	beq	l_2ce8                             		; [beq l_2ce8] 0x2d55 on c64 version
+	
+l_2d57:
+	GET_ADDRESS	$ffa401                     ; [lda $a401]
+	move.b	(a0),d0                         	; [...]
+	PUSH_SR
+	GET_ADDRESS	$1a                       	; [sta $1a]
+	move.b	d0,(a0)                         	; [...]
+	POP_SR
+	GET_ADDRESS	$ffa501                     ; [lda $a501]
+	move.b	(a0),d0                         	; [...]
+	PUSH_SR
+	GET_ADDRESS	$1b                       	; [sta $1b]
+	move.b	d0,(a0)                         	; [...]
+	POP_SR
+	clr.w	d2                               	; [ldy #$00]
+	jmp	l_2d04                             		; [jmp l_2d04]
+l_2d66:
+	clr.w	d2                               	; [ldy #$00]
+	CLR_XC_FLAGS                           	; [clc]
+	GET_ADDRESS	$12                       	; [lda $12]
+	move.b	(a0),d0                         	; [...]
+	move.b	#$01,d4								; addx.b	#$01,d0  ; [adc #$01]
+	addx.b	d4,d0                        		; [adc #$01]
+	PUSH_SR
+	GET_ADDRESS	$12                       	; [sta $12]
+	move.b	d0,(a0)                         	; [...]
+	POP_SR
+	bcc	l_2d73                             		; [bcc l_2d73]
+	GET_ADDRESS	$13                       	; [inc $13]
+	addq.b	#1,(a0)                         	; [...]
+l_2d73:
+	GET_ADDRESS_Y	$12                     	; [lda ($12),y]
+	move.b	(a0,d2.w),d0                    	; [...]
+	or.b	#$80,d0                          	; [ora #$80]
+	and.b	#$bf,d0                         	; [and #$bf]
+	PUSH_SR
+	GET_ADDRESS	$15                       	; [sta $15]
+	move.b	d0,(a0)                         	; [...]
+	POP_SR
+	cmp.b	#$a4,d0                         	; [cmp #$a4]
+	bcc	l_2de3                             		; [bcs l_2de3]
+	addq.b	#1,d2                           	; [iny]
+	GET_ADDRESS_Y	$12                     	; [lda ($12),y]
+	move.b	(a0,d2.w),d0                    	; [...]			0x80cc - 0x0
+	PUSH_SR
+	GET_ADDRESS	$14                       	; [sta $14]	
+	move.b	d0,(a0)                         	; [...]			set to 0x8000
+	POP_SR
+	addq.b	#1,d2                           	; [iny]
+	GET_ADDRESS_Y	$12                     	; [lda ($12),y]
+	move.b	(a0,d2.w),d0                    	; [...]
+	beq	l_2de3                             		; [beq l_2de3] returns to 0x20fe - jsr $2ca5
+	
+	; to test.
+	move.b	d0,d1                           	; [tax]
+	GET_ADDRESS	$ffa500                     ; [lda $a500,x]
+	move.b	(a0,d1.w),d0                    	; [...]
+	PUSH_SR
+	GET_ADDRESS	$1b                       	; [sta $1b]
+	move.b	d0,(a0)                         	; [...]
+	POP_SR
+	GET_ADDRESS	$ffa400                     ; [lda $a400,x]
+	move.b	(a0,d1.w),d0                    	; [...]
+	PUSH_SR
+	GET_ADDRESS	$1a                       	; [sta $1a]
+	move.b	d0,(a0)                         	; [...]
+	POP_SR
+	CLR_XC_FLAGS                           	; [clc]
+	GET_ADDRESS	$12                       	; [lda $12]
+	move.b	(a0),d0                         	; [...]
+	move.b	#$03,d4	;	addx.b	#$03,d0                        	; [adc #$03]
+	addx.b	d4,d0                        	; [adc #$03]
+	PUSH_SR
+	GET_ADDRESS	$12                       	; [sta $12]
+	move.b	d0,(a0)                         	; [...]
+	POP_SR
+	bcc	l_2d9f                             	; [bcc l_2d9f]
+	GET_ADDRESS	$13                       	; [inc $13]
+	addq.b	#1,(a0)                         	; [...]
+l_2d9f:
+	clr.b	d2                               	; [ldy #$00]
+	GET_ADDRESS_Y	$1a                     	; [lda ($1a),y]
+	move.b	(a0,d2.w),d0                    	; [...]
+	addq.b	#1,d2                           	; [iny]
+	PUSH_SR
+	GET_ADDRESS	$8f                       	; [sta $8f]
+	move.b	d0,(a0)                         	; [...]
+	POP_SR
+l_2da6:
+	GET_ADDRESS	$14                       	; [lda $14]
+	move.b	(a0),d0                         	; [...]
+	PUSH_SR
+	GET_ADDRESS	$1c                       	; [sta $1c]
+	move.b	d0,(a0)                         	; [...]
+	POP_SR
+	GET_ADDRESS	$15                       	; [lda $15]
+	move.b	(a0),d0                         	; [...]
+	PUSH_SR
+	GET_ADDRESS	$1d                       	; [sta $1d]
+	move.b	d0,(a0)                         	; [...]
+	POP_SR
+	GET_ADDRESS_Y	$1a                     	; [lda ($1a),y]
+	move.b	(a0,d2.w),d0                    	; [...]
+	addq.b	#1,d2                           	; [iny]
+	and.b	#$1f,d0                         	; [and #$1f]
+	move.b	d0,d1                           	; [tax]
+l_2db4:
+	GET_ADDRESS_Y	$1a                     	; [lda ($1a),y]
+	move.b	(a0,d2.w),d0                    	; [...]
+	addq.b	#1,d2                           	; [iny]
+	PUSH_SR
+	GET_ADDRESS	$11                       	; [sty $11]
+	move.b	d2,(a0)                         	; [...]
+	POP_SR
+	clr.b	d2                               	; [ldy #$00]
+	cmp.b	#$20,d0                         	; [cmp #$20]
+	beq	l_2dc1                             		; [beq l_2dc1]
+	PUSH_SR
+	GET_ADDRESS_Y	$1c                     	; [sta ($1c),y]
+	move.b	d0,(a0,d2.w)                    	; [...]
+	POP_SR
+l_2dc1:
+	bsr.s	l_2de4                            	; [jsr l_2de4]
+	GET_ADDRESS	$11                       	; [ldy $11]
+	move.b	(a0),d2                         	; [...]
+	GET_ADDRESS	$1d                       	; [dec $1d]
+	subq.b	#1,(a0)                         	; [...]
+	GET_ADDRESS	$1d                       	; [dec $1d]
+	subq.b	#1,(a0)                         	; [...]
+	bpl	l_2de3                             		; [bpl l_2de3]
+	subq.b	#1,d1                           	; [dex]
+	bne	l_2db4                             		; [bne l_2db4]
+	CLR_XC_FLAGS                           	; [clc]
+	GET_ADDRESS	$14                       	; [lda $14]
+	move.b	(a0),d0                         	; [...]
+	move.b	#$01,d4								;	addx.b	#$01,d0  ; [adc #$01]
+	addx.b	d4,d0                        		; [adc #$01]
+	PUSH_SR
+	GET_ADDRESS	$14                       	; [sta $14]
+	move.b	d0,(a0)                         	; [...]
+	POP_SR
+	bcc	l_2dda                             		; [bcc l_2dda]
+	GET_ADDRESS	$15                       	; [inc $15]
+	addq.b	#1,(a0)                         	; [...]
+l_2dda:
+	GET_ADDRESS	$8f                       	; [dec $8f]
+	subq.b	#1,(a0)                         	; [...]
+	bne	l_2da6                             		; [bne l_2da6]
+	clr.b	d2                               	; [ldy #$00]
+	jmp	l_2d73                             		; [jmp l_2d73]
+l_2de3:
+	rts                                    		; [rts]
+l_2de4:
+	cmp.b	#$59,d0                         	; [cmp #$59]
+	bcs	l_2e16                             		; [bcc l_2e16]
+	cmp.b	#$5c,d0                         	; [cmp #$5c]
+	bcc	l_2e16                             		; [bcs l_2e16]
+	GET_ADDRESS	$54                       	; [ldy $54]
+	move.b	(a0),d2                         	; [...]
+	addq.b	#1,d2                           	; [iny]
+	cmp.b	#$10,d2                         	; [cpy #$10]
+	bcc	l_2e16                             		; [bcs l_2e16]
+	PUSH_SR
+	GET_ADDRESS	$54                       	; [sty $54]
+	move.b	d2,(a0)                         	; [...]
+	POP_SR
+	GET_ADDRESS	$1d                       	; [lda $1d]
+	move.b	(a0),d0                         	; [...]
+	and.b	#$01,d0                         	; [and #$01]
+	PUSH_SR
+	GET_ADDRESS	$0230                     	; [sta $0230,y]
+    move.b	d0,(a0,d2.w)                 		; [...]
+	POP_SR
+	GET_ADDRESS	$1d                       	; [lda $1d]
+	move.b	(a0),d0                         	; [...]
+	SET_XC_FLAGS                           	; [sec]
+	SBC_IMM	 $82                           		; [sbc #$82]
+												; [clc]
+	add.b	#$0c,d0                        		; [adc #$0c]
+	lsr.b	#1,d0                            	; [lsr a]
+	PUSH_SR
+	GET_ADDRESS	$0220                     	; [sta $0220,y]
+    move.b	d0,(a0,d2.w)                 		; [...]
+	POP_SR
+	GET_ADDRESS	$1c                       	; [lda $1c]
+	move.b	(a0),d0                         	; [...]
+	PUSH_SR
+	GET_ADDRESS	$0210                     	; [sta $0210,y]
+    move.b	d0,(a0,d2.w)                 		; [...]
+	POP_SR
+	roxr.b	#1,d0                           	; [ror a]
+	PUSH_SR
+	GET_ADDRESS	$0200                     	; [sta $0200,y]
+    move.b	d0,(a0,d2.w)                 		; [...]
+	POP_SR
+	st.b	d0                                	; [lda #$ff]
+	PUSH_SR
+	GET_ADDRESS	$0240                     	; [sta $0240,y]
+    move.b	d0,(a0,d2.w)                 		; [...]
+	POP_SR
+l_2e16:
+	rts                                    	; [rts]
+
+l_2e17:
+	move.w	#$18,d2                        	; [ldy #$18]
+	move.b	#$01,d0                        	; [lda #$01]
+l_2e1b:
+	PUSH_SR
+	;GET_ADDRESS	$a518                 ; [sta $a518,y]
+	lea $ffa518,a0
+    move.b	d0,(a0,d2.w)                 	; [...]
+	POP_SR
+	subq.b	#1,d2                          ; [dey]
+	cmp.b	#$14,d2                        ; [cpy #$14]
+	bcc	l_2e1b                             	; [bcs l_2e1b]
+	move.w	#$0f,d2                        	; [ldy #$0f]
+	clr.b	d0                             ; [lda #$00]
+	PUSH_SR
+	GET_ADDRESS	$10                    ; [sta $10]
+	move.b	d0,(a0)                        ; [...]
+	POP_SR
+
+l_2e29:
+	
+	GET_ADDRESS	$10                    ; [ldx $10] - 0x1bf0
+	move.b	(a0),d1                       ; [...]
+	lea $ff0800,a0                   	  ; [lda $0800,x]
+	move.b	(a0,d1.w),d0                  ; [...]			; 0xb5
+	GET_ADDRESS	$10                   ; [inc $10]
+	addq.b	#1,(a0)                       ; [...]
+	and.b	#$0f,d0                       ; [and #$0f]		; 0x05
+										  ; [clc]
+	add.b	#$07,d0                       ; [adc #$07]		; 0x05+0x7 = 0xc
+	move.b	d0,d1                        ; [tax]			; 0xc
+	lea $ffa500,a0                      ; [lda $a500,x]
+	move.b	(a0,d1.w),d0                 ; [...]			; if 0 then branch to 2e3e
+	beq	l_2e3e                        	; [beq l_2e3e]
+	bsr.w l_2ea5                        ; [jsr l_2ea5]	; not working
+	
+l_2e3e: ; 0x1c22
+	
+	; character ram table	hi
+	lea		l_b360_c64,a0
+	move.b	(a0,d1.w),d0               ; [...]
+	PUSH_SR
+	lea	$ffa400,a0               		; [sta $a400,y]
+    move.b	d0,(a0,d2.w)                ; [...]
+	POP_SR
+	
+	; character ram table	low
+	lea l_b379_c64,a0
+	move.b	(a0,d1.w),d0                ; [...]
+	
+	
+	PUSH_SR
+	lea	$ffa410,a0                      ; [sta $a410,y]
+    move.b	d0,(a0,d2.w)                ; [...]
+	POP_SR
+	
+	lea l_340f,a0                     	; [lda $340f,x]  - check these values, colour ram ??
+	move.b	(a0,d1.w),d0               ; [...]
+	PUSH_SR
+	lea $ffa480,a0						; [sta $a480,y]
+    move.b	d0,(a0,d2.w)               ; [...]
+	POP_SR
+	
+	lea $ffa500,a0                     	; [inc $a500,x]
+    addq.b	#1,(a0,d1.w)                 	; [...]
+	GET_ADDRESS	$10                     ; [ldx $10]
+	move.b	(a0),d1                         ; [...]
+	
+	; transform these values to vram addresses
+	;4b4e - $ca8c
+	;4969 - $c482
+	;4ad7 - $c90e
+	;4a51 - $c742
+	;49c4 - $c598
+	;4918 - $c380
+	;4b25 - $ca0a
+	;4acd - $c8ca
+	;4a76 - $c7bc
+	;4a90 - $c820
+	;499a - $c514 
+	;4a11 - $c692
+	;4afb - $c986
+	;495a - $c434
+	;4b8d - $cb3a
+	;49e2 - $c604
+	
+	lea $ff0800,a0                     	; [lda $0800,x]	
+	move.b	(a0,d1.w),d0                   ; [...]									0xc2
+	GET_ADDRESS	$10                     ; [inc $10]
+	addq.b	#1,(a0)                         ; [...]
+	and.b	#$1f,d0                         ; [and #$1f]							0x02	
+	cmp.b	#$14,d0                         ; [cmp #$14]							
+	bcs	l_2e62                             	; [bcc l_2e62]
+	; need to add 1 to factor in carry set.
+	move.b	#5,d4							; addx.b #$04,d0  ; [adc #$04]
+	addx.b	d4,d0                        	; [adc #$04]
+
+l_2e62:
+	move.b	d0,d1                           ; [tax]
+	lea $ffa518,a0                       	; [lda $a518,x]
+	move.b	(a0,d1.w),d0                   ; [...]
+	beq	l_2e6b                             	; [beq l_2e6b]
+	bsr.w	l_2ebe                          ; [jsr l_2ebe]
+	
+l_2e6b:
+	lea	$ffa518,a0                      	; [inc $a518,x]
+    addq.b	#1,(a0,d1.w)                 	; [...] 
+	move.b	d1,d0                          ; [txa]
+	CLR_XC_FLAGS                           ; [clc]
+	lea	$ffa410,a0                     	; [adc $a410,y]
+	move.b	(a0,d2.w),d4					; addx.b	(a0,d2.w),d0                    	; [...]
+	addx.b	d4,d0                     		; [...]
+	PUSH_SR
+	lea	$ffa410,a0 	                   	; [sta $a410,y]
+    move.b	d0,(a0,d2.w)                 	; [...]
+	lea	$ffa400,a0                   		; [lda $a400,y]
+	move.b	(a0,d2.w),d0                   ; [...]
+	move.b	#$00,d4							; addx.b	#$00,d0  ; [adc #$00]
+	addx.b	d4,d0                        	; [adc #$00]
+	PUSH_SR
+	lea	$ffa400,a0                     	; [sta $a400,y]
+    move.b	d0,(a0,d2.w)                 	; [...]
+	POP_SR
+	POP_SR                                 	; [plp]
+	lea	$ffa480,a0	                     	; [lda $a480,y]
+	move.b	(a0,d2.w),d0                    	; [...]
+	move.b	#$00,d4							;	addx.b	#$00,d0 ; [adc #$00]
+	addx.b	d4,d0                        	; [adc #$00]
+	PUSH_SR
+	lea	$ffa480,a0                    	; [sta $a480,y]
+    move.b	d0,(a0,d2.w)                 	; [...]
+	POP_SR
+	GET_ADDRESS	$10                       	; [ldx $10]
+	move.b	(a0),d1                         	; [...]
+	lea $ff0800,a0                     	; [lda $0800,x]
+	move.b	(a0,d1.w),d0                    	; [...]
+	GET_ADDRESS	$10                       	; [inc $10]
+	addq.b	#1,(a0)                         	; [...]
+	and.b	#$01,d0                         	; [and #$01]
+											; [clc]
+	add.b	#$42,d0                        	; [adc #$42]
+	PUSH_SR
+	lea	$ffa420,a0	                  	; [sta $a420,y]
+    move.b	d0,(a0,d2.w)                 	; [...]
+	POP_SR
+	subq.b	#1,d2                           	; [dey]
+	bpl	l_2e29                             	; [bpl l_2e29]
+	clr.b	d0                               	; [lda #$00]
+	move.b	#$40,d2                        	; [ldy #$40]
+	
+l_2e9e:
+	PUSH_SR
+	lea	$ffa500,a0	                		; [sta $a500,y]
+    move.b	d0,(a0,d2.w)                 	; [...]
+	POP_SR
+	subq.b	#1,d2                           	; [dey]
+	bpl	l_2e9e                             	; [bpl l_2e9e]
+	rts                                    	; [rts]
+
+l_2ea5:
+	GET_ADDRESS	$8d                       	; [lda $8d]
+	move.b	(a0),d0                         	; [...]
+	PUSH_SR
+	GET_ADDRESS	$8f                       	; [sta $8f]
+	move.b	d0,(a0)                         	; [...]
+	POP_SR
+
+l_2ea9:
+	
+	move.b	d1,d0                           	; [txa]
+	CLR_XC_FLAGS                           ; [clc]
+	add.b	#$07,d0                        	; [adc #$07]
+	cmp.b	#$17,d0                         	; [cmp #$17]
+	bcs	l_2eb3                             	; [bcc l_2eb3]
+	sub.b 	#$10,d0                           	; [sbc #$10]
+l_2eb3:
+	move.b	d0,d1                           	; [tax]
+	GET_ADDRESS	$8f                       	; [dec $8f]
+	subq.b	#1,(a0)                         	; [...]
+	beq	l_2ebd                             	; [beq l_2ebd]
+	lea $ffa500,a0                     	; [lda $a500,x]
+	move.b	(a0,d1.w),d0                    	; [...]
+	bne	l_2ea9                             	; [bne l_2ea9]
+l_2ebd:
+	rts                                    	; [rts]
+l_2ebe:
+	GET_ADDRESS	$8d                       	; [lda $8d]
+	move.b	(a0),d0                         	; [...]
+	PUSH_SR
+	GET_ADDRESS	$8f                       	; [sta $8f]
+	move.b	d0,(a0)                         	; [...]
+	POP_SR
+l_2ec2:
+	move.b	d1,d0                           	; [txa]
+											; [clc]
+	add.b	#$07,d0                        	; [adc #$07]
+	cmp.b	#$27,d0                         	; [cmp #$27]
+	bcs	l_2ecc                             	; [bcc l_2ecc]
+	;SBC_IMM	 $27                           	; [sbc #$27]
+	sub.b #$27,d0
+l_2ecc:
+	move.b	d0,d1                           	; [tax]
+	GET_ADDRESS	$8f                       	; [dec $8f]
+	subq.b	#1,(a0)                         	; [...]
+	beq	l_2ed6                             	; [beq l_2ed6]
+	lea $ffa518,a0                     	; [lda $a518,x]
+	move.b	(a0,d1.w),d0                    	; [...]
+	bne	l_2ec2                             	; [bne l_2ec2]
+l_2ed6:
+	rts                                    	; 
+	
+	; ===============================================		
+	; star generation between first 2 and last 2 rows
+	; ===============================================
+l_2ed7:
+	clr.w d1
+	GET_ADDRESS	$8d                       	; [ldx $8d] - 1e5a
+	move.b	(a0),d1                         	; [...]
+l_2ed9:
+	
+	; ===============================================		
+	; Transform stars from VIC II to Sega vram memory
+	; adjusting the position based on the difference 
+	; between the screen setups of the C64 and Sega
+	; Handle the difference in row length and character 
+	; positioning between the two systems.
+	; ===============================================
+	
+	; The alogorithm
+	; 49e2 - $c604
+	; 49e2 - 4800 = 1e2
+	; 1e2 / 40 = 12 rows 
+	; 482 + 12 * 24 < 1 = 604
+	; 0xc000 | 0x604 = 0xc604
+	
+	; 4b8d - $cb3a
+	; 4b8d - 4800 = 38d
+	; 0x38d / 0x28 = 22 rows
+	; 909 + 22 * 24 < 1 = B3a
+	
+	; 495a - $c434
+	; 495a - 4800 = 15a
+	; 0x15a / 0x28 = 8
+	; 346 + 8 * 24 < 1 = 434
+	
+	
+	
+	; pointers to vram - high
+	clr.w d3
+	lea $ffa400,a0
+	move.b	(a0,d1.w),d0	; get the high
+	asl.w	#8,d0			; shift it 8 bits left
+	move.b	16(a0,d1.w),d0	; get the low
+	sub.w #$4800,d0		; 0x1e2			 ( characters from start )
+	move.w	d0,d3			; save 0x1e2
+	divu.w  #40,d0			; get row #
+	mulu.w #24,d0			; get the delta ( sega has 64 rows )
+	add.w d0,d3			; add delta to start
+	lsl.w #1,d3				; multiply that by 2, each char is equal to two bytes
+	or.w #$c000,d3			; add the base address of vram
+	
+	;lea $ffa400,a0
+	;move.b	(a0,d1.w),d0 
+	move.w d3,d0
+	lsr.w #8,d0
+	move.b	d0,(a0,d1.w) ; modify table
+	PUSH_SR
+	GET_ADDRESS	$15                       	; [sta $15]
+	move.b	d0,(a0)                         	; [...]
+	POP_SR
+	
+	; vram - low
+	lea $ffa410,a0
+	move.b d3,d0
+	move.b	d0,(a0,d1.w) 						; modify table
+	PUSH_SR
+	GET_ADDRESS	$14                       	; [sta $14]
+	move.b	d0,(a0)                         	; [...]
+	POP_SR
+	clr.b	d2                               	; [ldy #$00]
+	GET_ADDRESS_Y_RAM	$14                     ; [lda ($14),y]
+	
+	; read character ram position
+	SetVRAMReadReg a0
+	move.w vdp_data,d0
+	
+	cmp.b	#$20,d0                         	; [cmp #$20]
+	bne	l_2f0b                             		; [bne l_2f0b]
+	
+	
+	; pointers to star objects
+	;GET_ADDRESS	$a420                     ; [lda $a420,x]
+	lea $ffa420,a0								; star
+	move.b	(a0,d1.w),d0                    	; [...]
+	
+	PUSH_SR
+	GET_ADDRESS_Y_RAM	$14                     ; [sta ($14),y]
+	SetVRAMWriteReg a0
+	move.w d0,vdp_data							; write a star if 0x20 is found.
+	
+	
+	; color ram.
+	;move.b	d0,(a0,d2.w)                    	; [...]	 ; 
+	POP_SR
+	;GET_ADDRESS	$a480                     ; [lda $a480,x]
+	lea $ffa480,a0
+	move.b	(a0,d1.w),d0                    	; [...]
+	
+	PUSH_SR
+	GET_ADDRESS	$15                       	; [sta $15]
+	move.b	d0,(a0)                         	; [...]
+	POP_SR
+	GET_ADDRESS	$58                       	; [lda $58]
+	move.b	(a0),d0                         	; [...]
+	
+l_2ef7:
+	
+	;PUSH_SR
+	;GET_ADDRESS_Y	$14                     	; [sta ($14),y] - write to colour ram
+	;move.b	d0,(a0,d2.w)                    	; [...]
+	;POP_SR
+	subq.b	#1,d1                           	; [dex] - 0x1f7c
+	bpl	l_2ed9                             		; [bpl l_2ed9]
+
+	GET_ADDRESS	$2c                       	; [ldx $2c] - scroll value
+	move.b	(a0),d1                         	; [...]
+	GET_ADDRESS	l_311e                     	; [lda $311e,x]
+	move.b	(a0,d1.w),d0                    	; [...]
+	PUSH_SR
+	GET_ADDRESS	$7a15                     	; [sta $7a15] - shift star
+	move.b	d0,(a0)                         	; [...]
+	GET_ADDRESS	$7a1a                     	; [sta $7a1a] - shift star
+	move.b	d0,(a0)                         	; [...]
+	GET_ADDRESS	$7a1b                     	; [sta $7a1b] - shift star
+	move.b	d0,(a0)                         	; [...]
+	POP_SR
+	rts                                    	; [rts]
+l_2f0b:
+	;GET_ADDRESS	$a480                     	; [lda $a480,x]
+	lea $ffa480,a0
+	move.b	(a0,d1.w),d0                    	; [...]
+	PUSH_SR
+	GET_ADDRESS	$15                       	; [sta $15]
+	move.b	d0,(a0)                         	; [...]
+	POP_SR
+	GET_ADDRESS	$4d                       	; [lda $4d]
+	move.b	(a0),d0                         	; [...]
+	jmp	l_2ef7                             	; [jmp l_2ef7]
+
+
+	;==============
+	; Level colours
+	;==============
+l_2f33:
+	; colour table for super dreadnoughts - customize this routine
+	;move.b	#$72,d1                        	; [ldx #$72]
+	;move.b	#$33,d2                        	; [ldy #$33]
+	move.w	#l_3372,d2
+	move.b  d2,d1
+	lsr.w	#8,d2								; get high byte
+	
+	PUSH_SR
+	GET_ADDRESS	$1c                       	; [stx $1c]
+	move.b	d1,(a0)                         	; [...]
+	GET_ADDRESS	$1d                       	; [sty $1d]
+	move.b	d2,(a0)                         	; [...]
+	POP_SR
+	
+	clr.b	d0                               	; [lda #$00]
+	PUSH_SR
+	GET_ADDRESS	$8f                       	; [sta $8f]
+	move.b	d0,(a0)                         	; [...]
+	POP_SR
+	GET_ADDRESS	$61                       	; [lda $61]
+	move.b	(a0),d0                         	; [...]
+	bne	l_2f5b                             		; [bne l_2f5b]
+	GET_ADDRESS	$26                       	; [ldy $26]
+	move.b	(a0),d2                         	; [...]
+	;GET_ADDRESS	l_copied_data1+$30        ; [lda l_copied_data1+$30,y]
+	lea	$ffe030,a0                    		
+	move.b	(a0,d2.w),d0                    	; [...]
+	beq	l_2f5b                             		; [beq l_2f5b]
+	PUSH_SR
+	GET_ADDRESS	$8f                       	; [sta $8f]
+	move.b	d0,(a0)                         	; [...]
+	POP_SR
+
+l_2f4c:
+	CLR_XC_FLAGS                           	; [clc]
+	GET_ADDRESS	$1c                       	; [lda $1c]
+	move.b	(a0),d0                         	; [...]
+	move.b	#$05,d4								;	addx.b	#$05,d0 - [adc #$05]
+	addx.b	d4,d0                        		; [adc #$05]
+	PUSH_SR
+	GET_ADDRESS	$1c                       	; [sta $1c]
+	move.b	d0,(a0)                         	; [...]
+	POP_SR
+	bcc	l_2f57									; [bcc l_2f57]
+	GET_ADDRESS	$1d                       	; [inc $1d]
+	addq.b	#1,(a0)                         	; [...]
+l_2f57:
+	GET_ADDRESS	$8f                       	; [dec $8f]
+	subq.b	#1,(a0)                         	; [...]
+	bne	l_2f4c                             		; [bne l_2f4c]
+	
+l_2f5b:
+	move.b	#$04,d2                        		; [ldy #$04]
+l_2f5d:
+	GET_ADDRESS_Y	$1c                     	; [lda ($1c),y]
+	move.b	(a0,d2.w),d0                    	; [...]
+	PUSH_SR
+	GET_ADDRESS	$004b                     	; [sta $004b,y]
+    move.b	d0,(a0,d2.w)                 		; [...]
+	POP_SR
+	subq.b	#1,d2                           	; [dey]
+	bpl	l_2f5d                             		; [bpl l_2f5d]
+	
+	GET_ADDRESS	$4b                       	; [lda $4b]
+	move.b	(a0),d0                         	; [...]
+	PUSH_SR
+	GET_ADDRESS	$d023                     	; [sta $d023] - background colour 2
+	;move.b	d0,(a0)                         	; [...]
+	POP_SR
+	GET_ADDRESS	$4c                       	; [lda $4c]
+	move.b	(a0),d0                         	; [...]
+	PUSH_SR
+	GET_ADDRESS	$d022                     	; [sta $d022] - background colour 1
+	;move.b	d0,(a0)                         	; [...]
+	POP_SR
+	GET_ADDRESS	$4e                       	; [lda $4e]
+	move.b	(a0),d0                         	; [...]
+	PUSH_SR
+	GET_ADDRESS	$d025                     	; [sta $d025] - sprite multicolor register 0
+	;move.b	d0,(a0)                         	; [...]
+	POP_SR
+	move.b	#$f1,d0                        		; [lda #$f1]
+	PUSH_SR
+	GET_ADDRESS	$d026                     	; [sta $d026] - Sprite multi-color register 1
+	;move.b	d0,(a0)                         	; [...]
+	POP_SR
+	GET_ADDRESS	$4d                       	; [lda $4d]
+	move.b	(a0),d0                         	; [...]
+	and.b	#$f7,d0                         	; [and #$f7]
+	PUSH_SR
+	GET_ADDRESS	$58                       	; [sta $58]
+	move.b	d0,(a0)                         	; [...]
+	POP_SR
+	
+	; colour ram - this needs to be customized.
+	move.b	#$a0,d1                        		; [ldx #$a0]
+	move.b	#$d8,d2                        		; [ldy #$d8]
+	PUSH_SR
+	GET_ADDRESS	$1c                       	; [stx $1c]
+	move.b	d1,(a0)                         	; [...]
+	GET_ADDRESS	$1d                       	; [sty $1d]
+	move.b	d2,(a0)                         	; [...]
+	POP_SR
+	move.b	#$02,d3                        		; [ldx #$02]
+	GET_ADDRESS	$58                       	; [lda $58]
+	move.b	(a0),d0                         	; [...]
+	;bsr.w	l_b189                           ; [jsr l_b189]
+	move.b	#$11,d3                        		; [ldx #$11]
+	GET_ADDRESS	$4d                       	; [lda $4d]
+	move.b	(a0),d0                         	; [...]
+	;bsr.w	l_b189                           ; [jsr l_b189]
+	move.b	#$02,d3                        		; [ldx #$02]
+	GET_ADDRESS	$58                       	; [lda $58]
+	move.b	(a0),d0                         	; [...]
+	;bsr.w	l_b189                           ; [jsr l_b189]
+	rts                                    		; [rts]
+	
+l_2fc8:
+	rts
+
 
 l_b019:
 	clr.b	d0                               	; [lda #$00]
@@ -1695,6 +2989,19 @@ l_b379:
 	dc.b $00,$40,$80,$c0
 	dc.b $00,$40,$80
 	
+l_b360_c64:
+	dc.b $48,$48,$48,$48,$48,$48,$48,$49
+	dc.b $49,$49,$49,$49,$49,$4a,$4a,$4a
+	dc.b $4a,$4a,$4a,$4a,$4b,$4b,$4b,$4b
+	dc.b $4b
+	
+l_b379_c64:
+	dc.b $00,$28,$50,$78,$a0
+	dc.b $c8,$f0,$18,$40,$68
+	dc.b $90,$b8,$e0,$08,$30
+	dc.b $58,$80,$a8,$d0,$f8
+	dc.b $20,$48,$70,$98
+	
 l_b3b8:
 	dc.b $00,$0f,$4f,$18,$15,$1e,$42,$0e
 
@@ -1702,7 +3009,8 @@ l_b3c0:
 	dc.b $30,$00,$05,$ff,$20,$44,$b5,$85
 	dc.b $bd,$c9,$46,$f0,$0d,$c9,$53,$d0
 	
-
+	dc.b 0
+	
 	;================================
 	;Include game assets
 	;================================
