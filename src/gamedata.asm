@@ -57,7 +57,46 @@ l_3192:
 	dc.b $07,$07,$07,$07,$07,$07,$05,$05
 	dc.b $05,$05,$05,$05,$05,$05,$05,$05	
 	
+	;===========================
+	;Colour table for bg charset
+	;===========================
+l_3372:
 
+	dc.b $fb,$ff			; 00 - text scroll 
+	dc.b $f8,$fc,$fb
+
+	dc.b $f0,$fb
+	dc.b $fe,$fa,$f2		; 02 - lead, 13 - ergonite 
+
+	dc.b $f0,$fc			; 08 - tungsten
+	dc.b $fa,$fe,$f6
+
+	dc.b $f5,$fd			; 05 - iron
+	dc.b $f8,$fe,$f6
+
+	dc.b $f2,$fa			; 15 - uridium
+	dc.b $f8,$f7,$f8
+	
+	dc.b $fb,$fc
+	dc.b $fc,$fa,$f2		; 10 - kallisto
+	
+	dc.b $f6,$fe
+	dc.b $f8,$fd,$f5		; 09 - iridon, 14 - galactium
+		
+	dc.b $f8,$f7
+	dc.b $f8,$fc,$f0		; 06 - gold
+			
+	dc.b $fb,$f3			; 07 - platinum
+	dc.b $fd,$fa,$f2
+	
+	dc.b $f9,$f8			; 03 - copper, 11 - tri alloy
+	
+l_340f:
+	dc.b $d8,$d8,$d8
+	dc.b $d8,$d8,$d8,$d8,$d9,$d9,$d9,$d9
+	dc.b $d9,$d9,$da,$da,$da,$da,$da,$da
+	dc.b $da,$db,$db,$db,$db,$db
+		
 l_349f:	
 	dc.b $4e,$1b,$12
 	dc.b $0d,$12,$1e,$42,$30,$0b,$22,$30
