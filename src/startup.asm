@@ -33,8 +33,8 @@ ROM_Start:
 	dc.l   INT_Null			; IRQ level 2
 	dc.l   INT_Null			; IRQ level 3
 	dc.l   INT_HInterrupt		; IRQ level 4 (horizontal retrace interrupt)
-	dc.l   INT_Null  		; IRQ level 5
-	dc.l   INT_VInterrupt		; IRQ level 6 (vertical retrace interrupt)
+	dc.l   INT_Null			; IRQ level 5
+	dc.l   VblankRamAddress	; Use a ram address pointer for Vblank ( IRQ level 6 vertical retrace interrupt )
 	dc.l   INT_Null			; IRQ level 7
 	dc.l   INT_Null			; TRAP #00 exception
 	dc.l   INT_Null			; TRAP #01 exception
@@ -276,6 +276,7 @@ z80_bus_grant   			equ $00A11101
 z80_reset       			equ $00A11200
 z80_ram         			equ $00A00000
 
+VblankRamAddress			equ $00ff4800
 	;==============================================================
 	; Memory emulation for ZP
 	;==============================================================
@@ -311,9 +312,9 @@ InitSystem:
 	
 	;==============================================================
 	; Initialise status register and set interrupt level.
-	; This begins firing vertical and horizontal interrupts.
+	; Disbable interrupts.
 	;==============================================================
-	move.w #$2300,sr
+	;move.w #$2700,sr
 	
 	tst.l $00A10008 ; Test mystery reset (expansion port reset?)
 	bne Main         ; Branch if Not Equal (to zero) - to Main
@@ -447,8 +448,14 @@ ClearRAM:
 	; Initialise status register and set interrupt level.
 	; This begins firing vertical and horizontal interrupts.
 	;==============================================================
-	move.w #$2300,sr
-	jmp Main
+	
+	
+	; Set up default interrupt address to ram pointer
+	move.l #IntTable,a0
+	move.w	#$4ef9,VblankRamAddress	; JMP
+	move.l (a0),VblankRamAddress+2	; INT_VInterrupt address vector
+	move.w #$4e73,VblankRamAddress+6  ; Move the RTE instruction
+	move.w #$2300,sr					; enable vblank/hblank
 	
 	include 'uridium.asm'	; main program is here.
 	include 'utility.asm' ; utility functions here
@@ -463,12 +470,13 @@ ClearRAM:
 	; RTS like a subroutine.
 	;==============================================================
 
-	; Vertical interrupt - run once per frame
+	; Vertical blank interrupt - run once per frame
+	; This is just a stub
 INT_VInterrupt:
 	; Doesn't do anything in this demo
 	rte
 
-	; Horizontal interrupt - run once per N scanlines (N = specified in VDP register 0xA)
+	; Horizontal blank interrupt - run once per N scanlines (N = specified in VDP register 0xA)
 INT_HInterrupt:
 	; Doesn't do anything in this demo
 	rte
@@ -484,6 +492,10 @@ CPU_Exception:
 	; (registers, stack, error type, etc) to help debug the problem.
 	stop  #$2700
 	rte
+	
+	even 
+IntTable:
+	dc.l INT_VInterrupt,l_3f00,l_3f93
 
 PSGData:
    dc.w $9fbf,$dfff
