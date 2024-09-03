@@ -181,7 +181,7 @@ vdp_plane_height			equ $20
 ; is off screen, which is useful for hiding sprites
 ; when not needed (saves needing to adjust the linked
 ; list in the attribute table).
-vdp_sprite_plane_width	equ $200
+vdp_sprite_plane_width		equ $200
 vdp_sprite_plane_height	equ $200
 
 ; The sprite border (invisible area left + top) size
@@ -276,6 +276,9 @@ z80_bus_grant   			equ $00A11101
 z80_reset       			equ $00A11200
 z80_ram         			equ $00A00000
 
+
+vblank_counter        		equ $00FF002f  
+hblank_counter        		equ $00FF004f 
 VblankRamAddress			equ $00ff4800
 	;==============================================================
 	; Memory emulation for ZP
@@ -479,6 +482,7 @@ INT_VInterrupt:
 	; Horizontal blank interrupt - run once per N scanlines (N = specified in VDP register 0xA)
 INT_HInterrupt:
 	; Doesn't do anything in this demo
+	addi.b #$1,$00ff009f
 	rte
 
 	; NULL interrupt - for interrupts we don't care about
