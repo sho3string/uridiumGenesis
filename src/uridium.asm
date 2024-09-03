@@ -1778,10 +1778,10 @@ l_2beb:
 	move.b	(a0),d0                         	; [...]
 												; [clc]
 	add.b	#$07,d0                        		; [adc #$07]
-	PUSH_SR
+	;PUSH_SR
 	GET_ADDRESS	$31                       	; [sta $31]
 	move.b	d0,(a0)                         	; [...]
-	POP_SR
+	;POP_SR
 	GET_ADDRESS	$2a                       	; [lda $2a]
 	move.b	(a0),d0                         	; [...]
 	move.b	#$00,d4								; addx.b	#$00,d0         ; [adc #$00]
@@ -1790,62 +1790,56 @@ l_2beb:
 	GET_ADDRESS	$31                       	; [ror $31]
 	move.b	(a0),d4								; roxr.b	#1,(a0)         ; [...]
 	roxr.b	#1,d4                         		; [...]
-	PUSH_SR
+	;PUSH_SR
 	move.b	d4,(a0)								; roxr.b	#1,(a0)         ; [...]
-	POP_SR
+	;POP_SR
 	lsr.b	#1,d0                            	; [lsr a]
 	GET_ADDRESS	$31                       	; [ror $31]
 	move.b	(a0),d4								; roxr.b	#1,(a0)         ; [...]
 	roxr.b	#1,d4                         		; [...]
-	PUSH_SR
+	;PUSH_SR
 	move.b	d4,(a0)								; roxr.b	#1,(a0)
-	POP_SR
+	;POP_SR
 	lsr.b	#1,d0                            	; [lsr a]
 	GET_ADDRESS	$31                       	; [ror $31]
 	move.b	(a0),d4								; roxr.b	#1,(a0)            
 	roxr.b	#1,d4                         		; [...]
-	PUSH_SR
+	;PUSH_SR
 	move.b	d4,(a0)								; roxr.b	#1,(a0) ; [...]
-	POP_SR
+	;POP_SR
 	and.b	#$01,d0                         	; [and #$01]
-	PUSH_SR
+	;PUSH_SR
 	GET_ADDRESS	$0f                       	; [sta $0f]
 	move.b	d0,(a0)                         	; [...]
-	POP_SR
+	;POP_SR
 	
 	; Scroll look up table start
 	move.b	#$82,d0                        		; [lda #$82]
 	GET_ADDRESS	$0f                       	; [ora $0f]
 	or.b	(a0),d0                           	; [...]
-	PUSH_SR
+	
+	;PUSH_SR
 	GET_ADDRESS	$30                       	; [sta $30]
 	move.b	d0,(a0)                         	; [...]
-	
+	;POP_SR
 	; use pointers to ram to handle self modifying code
 	;GET_ADDRESS	l_2c1f+2					; [sta $2c21] , high byte address of 0x8200
 	;move.b	d0,(a0)                         	; [...]
-	lea $ff0109,a0
-	move.b	d0,(a0)								; high byte in
-	POP_SR
+	lea $ff0108,a0
+	move.b	d0,(a0)								; low byte in
 	GET_ADDRESS	$31                       	; [lda $31]
 	move.b	(a0),d0                         	; [...]
-	PUSH_SR
-	lea $ff0108,a0								; [sta $2c20] , low byte address of 0x8200
+	;PUSH_SR
+	lea $ff0109,a0								; [sta $2c20] , high byte address of 0x8200
 	move.b	d0,(a0)                         	; [...]
-	POP_SR
+	;POP_SR
 	
 	move.b	#$c3,d0								; [lda #$48]  , use vram address on sega
-	PUSH_SR
-	lea $ff0105,a0								; [sta $2c24] , high byte address of 0x48f0
+	lea $ff0104,a0								; [sta $2c24] , low byte address of 0x48f0
 	move.b	d0,(a0)								; [...]
-	POP_SR
 	move.b	#$00,d0                        		; [lda #$f0],
-	PUSH_SR
-	lea $ff0104,a0								; [sta $2c23] , low byte address of 0x48f0
+	lea $ff0105,a0								; [sta $2c23] , high byte address of 0x48f0
 	move.b	d0,(a0)                         	; [...]
-	POP_SR
-	
-	
 	
 	move.w	#$11,d1                        		; [ldx #$11]	 ; 17 rows of playfield to render
 l_2c1d:
@@ -1855,8 +1849,7 @@ l_2c1d:
 l_2c1f:    
 
 	; [lda $8200,y]  tile data - use ram address pointer ; 
-	move.w  $00ff0108,d3             ; Load the 16-bit address (high and low bytes) into d3
-	rol.w	#8,d3
+	move.w  $00ff0108,d3           ; Load the 16-bit address (high and low bytes) into d3
 	or.l    #$00ff0000,d3          ; Convert to RAM address
 	move.l  d3,a0
 	move.b  (a0,d6.w),d0           ; Get the tile data from table
@@ -1882,11 +1875,10 @@ l_2c1f:
 	
 	
 	move.w  $ff0104,d5    						; Load the 16-bit address from $FF0104 (low byte) and $FF0105 (high byte)
-    rol.w  #8,d5           					; Rotate the lower word left by 8 bits to swap the bytes
     move.l  d5,a1         						; Move the resulting 32-bit address to a1
-	
-	; set vram address
+	; set vram address - needs optimization.
 	add.w d2,a1
+	
 	SetVRAMWriteReg a1
 	move.w d0,vdp_data							; [sta $48f0,y]  render playfield
 	
@@ -1896,15 +1888,11 @@ l_2c1f:
 	subq.b	#1,d1                           	; [dex]
 	beq	l_2c42                             		; [beq l_2c42]
 	
-	
-	lea $ff0109,a0								; [inc $2c21] x 2
+	lea $ff0108,a0								; [inc $2c21] x 2
 	addq.b	#2,(a0)
 
-
 	move.w $ff0104,d5
-	ror.w #8,d5
 	add.w #$80,d5								; [adc #$28] next row
-	ror.w   #8,d5      						; Rotate right by 8 bits, swapping the two bytes in the lower word
 	move.w	d5,$ff0104
 	jmp	l_2c1d                                 ; [jmp l_2c1d]
 	
@@ -1913,7 +1901,7 @@ l_2c42:
 	move.b	(a0),d0                         	; [...]
 												; [clc]
 	add.b	#$12,d0                        		; [adc #$12]
-	PUSH_SR
+	;PUSH_SR
 	GET_ADDRESS	$52                       	; [sta $52]
 	move.b	d0,(a0)                         	; [...]
 	GET_ADDRESS	$33                       	; [lda $33]
@@ -1922,30 +1910,30 @@ l_2c42:
 	SBC_IMM	 $58                           		; [sbc #$58]
 	and.b	#$f8,d0                         	; [and #$f8]
 	lsr.b	#2,d0
-	POP_SR                                 		; [plp]
+	;POP_SR                                 		; [plp]
 	GET_ADDRESS	$30                       	; [adc $30]
 	move.b	(a0),d4								; addx.b (a0),d0
 	addx.b	d4,d0                         		; [...]
-	PUSH_SR
+	;PUSH_SR
 	GET_ADDRESS	$53                       	; [sta $53]
 	move.b	d0,(a0)                         	; [...]
-	POP_SR
+	;POP_SR
 	GET_ADDRESS	$30                       	; [lda $30]
 	move.b	(a0),d0                         	; [...]
 	roxr.b	#1,d0                           	; [ror a]
 	GET_ADDRESS	$31                       	; [lda $31]
 	move.b	(a0),d0                         	; [...]
 	roxr.b	#1,d0                           	; [ror a]
-	PUSH_SR
+	;PUSH_SR
 	GET_ADDRESS	$50                       	; [sta $50]
 	move.b	d0,(a0)                         	; [...]
-	POP_SR
+	;POP_SR
 												; [clc]
 	add.b	#$14,d0                        		; [adc #$14]
-	PUSH_SR
+	;PUSH_SR
 	GET_ADDRESS	$51                       	; [sta $51]
 	move.b	d0,(a0)                         	; [...]
-	POP_SR
+	;POP_SR
 	rts                                    		; [rts]
 
 l_2c66:
@@ -2798,10 +2786,11 @@ l_2ed9:
 	move.b	16(a0,d1.w),d0	; get the low
 	sub.w #$4800,d0		; 0x1e2			 ( characters from start )
 	move.w	d0,d3			; save 0x1e2
-	divu.w  #40,d0			; get row #
+	divu.w  #40,d0		; get row #
+	
 	mulu.w #24,d0			; get the delta ( sega has 64 rows )
-	add.w d0,d3				; add delta to start
-	lsl.w #1,d3				; multiply that by 2, each char is equal to two bytes
+	add.w d0,d3			; add delta to start
+	lsl.w #1,d3			; multiply that by 2, each char is equal to two bytes
 	or.w #$c000,d3			; add the base address of vram
 	
 	;lea $ffa400,a0
