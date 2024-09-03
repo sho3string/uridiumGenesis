@@ -19,40 +19,24 @@
 		
 		macro SetVRAMWriteReg addr_reg
 		
-		movem.l  d0-d1,-(a7)      	
-		move.l \addr_reg,d0         ; Move the address to d0
-		andi.l #$3FFF,d0            ; Mask lower 14 bits
-		lsl.l #8,d0                 ; Shift left by 8 bits
-		lsl.l #8,d0                 ; Shift left by another 8 bits (total 16 bits)
-
-		move.l \addr_reg,d1         ; Move the original address to d1
-		lsr.l #8,d1                 ; Shift right by 6 bits (preparing for masking)
-		lsr.l #6,d1                 ; Shift right by 6 bits (preparing for masking)
-		;andi.l #$0003,d1         ; Mask the lower 2 bits after shifting
-
-		or.l  d1,d0                 ; Combine with the rest of the command
-		or.l  #(vdp_cmd_vram_write),d0 ; Set the command
-		move.l d0,vdp_control
-		movem.l (a7)+,d0-d1
+		move.l \addr_reg,d7               ; Load address into d1
+		lsl.l   #$2,d7                   	; High word of d1 is \addr>>14; low word of d1 is (\addr&$3FFF)<<2
+		lsr.w   #$2,d7                    	; High word of d1 is \addr>>14; low word of d1 is \addr&$3FFF
+		swap    d7                        	; High word of d1 is \addr&$3FFF; low word of d1 is \addr>>14
+		ori.l   #vdp_cmd_vram_write,d7  	; OR in VRAM write command
+		move.l  d7,vdp_control           	; Write to VDP
+		
 		endm
 		
 		macro SetVRAMReadReg addr_reg
 		
-		movem.l  d0-d1,-(a7)      	
-		move.l \addr_reg,d0         ; Move the address to d0
-		andi.l #$3FFF,d0            ; Mask lower 14 bits
-		lsl.l #8,d0                 ; Shift left by 8 bits
-		lsl.l #8,d0                 ; Shift left by another 8 bits (total 16 bits)
-
-		move.l \addr_reg,d1         ; Move the original address to d1
-		lsr.l #8,d1                 ; Shift right by 6 bits (preparing for masking)
-		lsr.l #6,d1                 ; Shift right by 6 bits (preparing for masking)
-		;andi.l #$0003,d1         ; Mask the lower 2 bits after shifting
-
-		or.l  d1,d0                 ; Combine with the rest of the command
-		or.l  #(vdp_cmd_vram_read),d0 ; Set the command
-		move.l d0,vdp_control
-		movem.l (a7)+,d0-d1
+		move.l \addr_reg,d7               ; Load address into d1
+		lsl.l   #$2,d7                   	; High word of d1 is \addr>>14; low word of d1 is (\addr&$3FFF)<<2
+		lsr.w   #$2,d7                    	; High word of d1 is \addr>>14; low word of d1 is \addr&$3FFF
+		swap    d7                        	; High word of d1 is \addr&$3FFF; low word of d1 is \addr>>14
+		ori.l   #vdp_cmd_vram_read,d7  	; OR in VRAM write command
+		move.l  d7,vdp_control           	; Write to VDP
+		
 		endm
 	
 		; Set the CRAM (colour RAM) address to write to next
