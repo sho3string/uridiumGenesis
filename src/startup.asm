@@ -34,7 +34,7 @@ ROM_Start:
 	dc.l   INT_Null			; IRQ level 3
 	dc.l   INT_HInterrupt		; IRQ level 4 (horizontal retrace interrupt)
 	dc.l   INT_Null			; IRQ level 5
-	dc.l   VblankRamAddress	; Use a ram address pointer for Vblank ( IRQ level 6 vertical retrace interrupt )
+	dc.l   INT_VInterrupt 		;VblankRamAddress	; Use a ram address pointer for Vblank ( IRQ level 6 vertical retrace interrupt )
 	dc.l   INT_Null			; IRQ level 7
 	dc.l   INT_Null			; TRAP #00 exception
 	dc.l   INT_Null			; TRAP #01 exception
@@ -112,7 +112,7 @@ VDPRegisters:
 	dc.b $08 ; $0A: Frequency of Horiz. interrupt in Rasters (number of lines travelled by the beam)
 	dc.b $00 ; $0B: External interrupts off, V scroll fullscreen, H scroll fullscreen
 	dc.b $81 ; $0C: Shadows and highlights off, interlace off, H40 mode (320 x 224 screen res)
-	dc.b $3F ; $0D: Horiz. scroll table at VRAM $FC00 (bits 0-5)
+	dc.b $3F ; $0D: Horiz. scroll table at VRAM $FC00
 	dc.b $00 ; $0E: Unused
 	dc.b $02 ; $0F: Autoincrement 2 bytes
 	dc.b $01 ; $10: Scroll plane size: 64x32 tiles
@@ -147,7 +147,7 @@ pad_data_a					equ $00A10003
 pad_data_b					equ	$00A10005
 
 ; VDP port addresses
-vdp_control				equ $00C00004
+vdp_control					equ $00C00004
 vdp_data					equ $00C00000
 vdp_debug					equ $00C0001C
 vdp_debug_mirror			equ $00C0001E
@@ -157,6 +157,8 @@ vdp_cmd_vram_read			equ $00000000
 vdp_cmd_vram_write			equ $40000000
 vdp_cmd_cram_read			equ $00000020
 vdp_cmd_cram_write			equ $C0000000
+vdp_write_hscroll			equ $50000003
+vdp_write_vscroll			equ $40000010
 
 ; VDP memory addresses
 ; according to VDP registers 0x2 and 0x4 (see table above)
@@ -181,7 +183,7 @@ vdp_plane_height			equ $20
 ; is off screen, which is useful for hiding sprites
 ; when not needed (saves needing to adjust the linked
 ; list in the attribute table).
-vdp_sprite_plane_width		equ $200
+vdp_sprite_plane_width	equ $200
 vdp_sprite_plane_height	equ $200
 
 ; The sprite border (invisible area left + top) size
@@ -201,8 +203,8 @@ tmss_address				equ $00A14000
 tmss_signature				equ 'SEGA'
 
 ; The size of a word and longword
-size_word				equ 2
-size_long				equ 4
+size_word					equ 2
+size_long					equ 4
 
 ; The size of one palette (in bytes, words, and longwords)
 size_palette_b				equ $20
@@ -215,7 +217,7 @@ size_tile_w				equ size_tile_b/size_word
 size_tile_l				equ size_tile_b/size_long
 
 ; Sprite initial draw positions (in pixels)
-sprite_1_start_pos_x		equ vdp_sprite_border_x
+sprite_1_start_pos_x		equ vdp_sprite_border_x+$0020
 sprite_1_start_pos_y		equ vdp_sprite_border_y+$0040
 sprite_2_start_pos_x		equ vdp_sprite_border_x+$0040
 sprite_2_start_pos_y		equ vdp_sprite_border_y+$0020
@@ -226,6 +228,10 @@ sprite_1_move_speed_y		equ $1
 sprite_2_move_speed_x		equ $2
 sprite_2_move_speed_y		equ $0
 
+; Locations in VRAM of assets
+chrset1						equ vram_addr_tiles
+manta						equ vram_addr_tiles+size_tile_b+tile_count*size_tile_b
+chrset2						equ vram_addr_tiles+1280*size_tile_b
 
 charRam		equ vram_addr_plane_a
 ; Emulate the > operator used on 6502 assemblers
@@ -247,7 +253,7 @@ charRamHi	equ (charRam >> 8) & $FF
 	;
 	; See bottom of the file for the sprite tiles themselves.
 	;==============================================================
-tile_id_sprite_1	equ $ff ; Sprite 1 index (9 tiles / 24 pixels x 24 pixels ) - add 8 for next frame.
+tile_id_sprite_1	equ $ff ; Sprite 1 index (9 tiles / 24 pixels x 24 pixels ) - add 9 for next frame.
 
 	;==============================================================
 	; MEMORY MAP
@@ -276,14 +282,13 @@ z80_bus_grant   			equ $00A11101
 z80_reset       			equ $00A11200
 z80_ram         			equ $00A00000
 
-
 vblank_counter        		equ $00FF002f  
 hblank_counter        		equ $00FF004f 
 VblankRamAddress			equ $00ff4800
 	;==============================================================
 	; Memory emulation for ZP
 	;==============================================================
-ZERO_PAGE_BASE equ $FF0000  ; Base address for the emulated zero page
+ZERO_PAGE_BASE 			equ $FF0000  ; Base address for the emulated zero page
 
 	;==============================================================
 	; TILE IDs
@@ -291,15 +296,18 @@ ZERO_PAGE_BASE equ $FF0000  ; Base address for the emulated zero page
 	; The indices of each tile above. Once the tiles have been
 	; written to VRAM, the VDP refers to each tile by its index.
 	;==============================================================
-tile_id_space			equ $20
-tile_count				equ 254	; Last entry is just the count
-sprite_count			equ 423
-number_of_palettes		equ 2
-vdpreg_bgcol			equ $8700
-palette_a				equ	$00
-palette_b				equ $10
-palette_c				equ $20
-palette_d				equ $30
+tile_id_space				equ $20
+tile_count					equ 254	; Last entry is just the count
+sprite_count				equ 225
+scrolltext_count			equ 127 
+manta_count_mirrored		equ 423
+manta_count_flipx			equ 225
+number_of_palettes			equ 2
+vdpreg_bgcol				equ $8700
+palette_a					equ	$00
+palette_b					equ $10
+palette_c					equ $20
+palette_d					equ $30
 
 ROM_End:
 
@@ -313,20 +321,19 @@ Main:
 
 InitSystem:
 	
-	;==============================================================
+	;====================================================
 	; Initialise status register and set interrupt level.
 	; Disbable interrupts.
-	;==============================================================
-	;move.w #$2700,sr
+	;====================================================
+	move.w #$2300,sr	; Enable vertical blank and horizontal blank
 	
-	tst.l $00A10008 ; Test mystery reset (expansion port reset?)
-	bne Main         ; Branch if Not Equal (to zero) - to Main
-	tst.w $00A1000C ; Test reset button
-	bne Main        ; Branch if Not Equal (to zero) - to Main
-	
-	;==============================================================
+	tst.l $00A10008	; Test mystery reset (expansion port reset?)
+	bne Main			; Branch if Not Equal (to zero) - to Main
+	tst.w $00A1000C	; Test reset button
+	bne Main			; Branch if Not Equal (to zero) - to Main
+	;==========================
 	; Initialise the Mega Drive
-	;==============================================================
+	;==========================
 	
 
 ; Write the TMSS signature (if a model 1+ Mega Drive)
@@ -363,30 +370,31 @@ InitPSG:
 	
 InitControllerPorts:
 	 ; Set IN I/O direction, interrupts off, on all ports
-	move.b #$00,$000A10009 ; Controller port 1 CTRL
-	move.b #$00,$00A1000B ; Controller port 2 CTRL
-	move.b #00,$00A1000D ; EXP port CTRL
+	move.b #$00,$000A10009 	; Controller port 1 CTRL
+	move.b #$00,$00A1000B 		; Controller port 2 CTRL
+	move.b #00,$00A1000D 		; EXP port CTRL
 	
-	;==============================================================
+	;==========================
 	; Clear VRAM (video memory)
-	;==============================================================
-	SetVRAMWriteConst $0000
+	;==========================
+	SetVRAMWriteConst $c000				; clear plane a and plane b ( 0xc000 - 0xefff )
 	
-	move.w #($00010000/size_word)-1,d0 ; Loop counter = 64kb, in words (-1 for DBRA loop)
+	move.w #($0002fff/size_word)-1,d0		; Loop counter = 64kb, in words (-1 for DBRA loop)
 ClrVramLp:                         
-    move.w #tile_id_space,vdp_data     ; blank tile / glyph         
+    move.w #tile_id_space,vdp_data		; blank tile / glyph         
     dbra d0,ClrVramLp 
 	; init horizontal scroll register
-	SetVRAMWriteConst vram_addr_hscroll
-	move.w #0,vdp_data					   ; reset horinzontal scroll register to 0, was set to #32 (tile_id_space) from previous operation.
 	
-	;==============================================================
+	SetVRAMWriteConst vram_addr_hscroll
+	move.w #0,vdp_data						; reset horinzontal scroll register to 0, was set to #32 (tile_id_space) from previous operation.
+	move.w #$8B02,vdp_control.l
+	
+	;==========================================
 	; Write the palette to CRAM (colour memory)
-	;==============================================================
+	;==========================================
 	
 	; Setup the VDP to write to CRAM address 0x0000 (first palette)
 	SetCRAMWrite $0000
-	
 	; Write the palette to CRAM
 	lea    C64Palette,a0			; Move palette address to a0
 	move.w #size_palette_w*number_of_palettes-1,d0	; Loop counter = 8 words in palette (-1 for DBRA loop)
@@ -395,36 +403,44 @@ PalLp:						; Start of loop
 	dbra d0,PalLp				; Decrement d0 and loop until finished (when d0 reaches -1)
 	
 	; Setup the VDP to write to VRAM address 0x0000 (the address of the first graphics tile, index 0)
-	SetVRAMWriteConst vram_addr_tiles
-	
-	;==============================================================
+	SetVRAMWriteConst chrset1
+	;===================================
 	; Write the font glyph tiles to VRAM
-	;==============================================================
+	;===================================
 	lea    UridiumCharSet,a0					; Move the address of the first graphics tile into a0
 	move.w #(tile_count*(size_tile_l))-1,d0	; Loop counter = 8 longwords per tile * num tiles (-1 for DBRA loop)
-CharLp:									; Start of loop
+CharLp:											; Start of loop
 	move.l (a0)+,vdp_data						; Write tile line (4 bytes per line), and post-increment address
-	dbra d0,CharLp							; Decrement d0 and loop until finished (when d0 reaches -1)
+	dbra d0,CharLp								; Decrement d0 and loop until finished (when d0 reaches -1)
 	
-	;==============================================================
+	;================================
 	; Write the sprites tiles to VRAM
-	;==============================================================
-	SetVRAMWriteConst (vram_addr_tiles+size_tile_b)+tile_count*size_tile_b
+	;================================
+	SetVRAMWriteConst manta
 	; Write the sprite tiles to VRAM
-	lea    SpritesManta,a0				; Move the address of the first graphics tile into a0
-	move.w #(sprite_count*(size_tile_l))-1,d0	; Loop counter = 8 longwords per tile * num tiles (-1 for DBRA loop)
-SpriteLp:						; Start of loop
-	move.l (a0)+,vdp_data				; Write tile line (4 bytes per line), and post-increment address
-	dbra d0,SpriteLp				; Decrement d0 and loop until finished (when d0 reaches -1)
+	lea    SpritesManta,a0								; Move the address of the first graphics tile into a0
+	move.w #(manta_count_flipx*(size_tile_l))-1,d0	; Loop counter = 8 longwords per tile * num tiles (-1 for DBRA loop)
+SpriteLp:												; Start of loop
+	move.l (a0)+,vdp_data								; Write tile line (4 bytes per line), and post-increment address
+	dbra d0,SpriteLp									; Decrement d0 and loop until finished (when d0 reaches -1)
 	
-
+	;==========================================
+	; Write the scroll text glyph tiles to VRAM
+	;==========================================
+	;SetVRAMWriteConst (vram_addr_tiles+size_tile_b)+tile_count*size_tile_b+(sprite_count*size_tile_b)<<1
+	SetVRAMWriteConst chrset2
+	lea    UridiumCharSet2,a0							; Move the address of the first graphics tile into a0
+	move.w #(scrolltext_count*(size_tile_l))-1,d0		; Loop counter = 8 longwords per tile * num tiles (-1 for DBRA loop)
+Char2Lp:												; Start of loop
+	move.l (a0)+,vdp_data								; Write tile line (4 bytes per line), and post-increment address
+	dbra d0,Char2Lp									; Decrement d0 and loop until finished (when d0 reaches -1)
+	
 	; just writing some garbage to the VRAM for debugging purposes - testing character generator
 	lea vram_addr_plane_a,a0
 	SetVRAMWriteReg a0
-	
 	move.w #$0,d0	; row count
 	move.w #$0,d1
-	move.w #$25,d2	; fill the whole screen
+	move.w #25,d2	; fill the whole screen
 loop:
 	
 	move.w d1,vdp_data
@@ -432,12 +448,12 @@ loop:
 	add.w #1,d1
 	cmp.w #40,d0
 	bne.s loop
-	
 	move.w #0,d0
 	add.w #$80,a0			; set next row down from current row.
 	SetVRAMWriteReg a0		; set vdp_control
 	dbra d2,loop
 	
+
 	; WIP - add all the other character sets as well ( there are three others to add )
 	; Clear RAM (top 64k of memory space)
     move.l #$00000000,d0       ; We're going to write zeroes over the whole of RAM, 4 bytes at a time
@@ -454,11 +470,11 @@ ClearRAM:
 	
 	
 	; Set up default interrupt address to ram pointer
-	move.l #IntTable,a0
-	move.w	#$4ef9,VblankRamAddress	; JMP
-	move.l (a0),VblankRamAddress+2	; INT_VInterrupt address vector
-	move.w #$4e73,VblankRamAddress+6  ; Move the RTE instruction
-	move.w #$2300,sr					; enable vblank/hblank
+	;move.l #IntTable,a0
+	;move.w	#$4ef9,VblankRamAddress	; JMP
+	;move.l (a0),VblankRamAddress+2	; INT_VInterrupt address vector
+	;move.w #$4e73,VblankRamAddress+6  ; Move the RTE instruction
+	;move.w #$2300,sr					; enable vblank/hblank
 	
 	include 'uridium.asm'	; main program is here.
 	include 'utility.asm' ; utility functions here
@@ -476,13 +492,19 @@ ClearRAM:
 	; Vertical blank interrupt - run once per frame
 	; This is just a stub
 INT_VInterrupt:
-	; Doesn't do anything in this demo
+	movem.l	d0-d7/a0-a6,-(sp)	
+	move.b  $00ffd41b,d0			; Load the current 8-bit LFSR value
+    lsr.b   #1,d0                	; Shift right by 1
+    bcc     no_carry				; If carry is clear, skip
+    eor.b   #$B8,d0				; XOR with the polynomial mask if carry was set
+no_carry:
+    move.b  d0,$00ffd41b			; Store the new LFSR value
+	movem.l	(sp)+,d0-d7/a0-a6
 	rte
 
 	; Horizontal blank interrupt - run once per N scanlines (N = specified in VDP register 0xA)
 INT_HInterrupt:
 	; Doesn't do anything in this demo
-	addi.b #$1,$00ff009f
 	rte
 
 	; NULL interrupt - for interrupts we don't care about

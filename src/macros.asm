@@ -186,7 +186,7 @@
 		
 		macro READ_LE_WORD	 srcreg
 		movem.l  d0-d4,-(a7)  
-		PUSH_SR
+		;PUSH_SR
 		move.b	(1,\srcreg),d4
 		lsl.w	#8,d4
 		move.b	(\srcreg),d4
@@ -197,19 +197,19 @@
 		andi.l #$FFFF0000, d0 ; Clear the lower word of d0
 		or.l d4, d0            ; Combine the cleared d0 with d4
 		move.l d0,\srcreg     ; Move the result back to a0
-		POP_SR
+		;POP_SR
 		movem.l  (a7)+,d0-d4
 		endm
 		
 		macro READ_LE_WORD_ROM	 srcreg
-		movem.l  d0-d4,-(a7)  
-		PUSH_SR
+		;movem.l  d0-d4,-(a7)  
+		;PUSH_SR
 		move.b	(1,\srcreg),d4
 		lsl.w	#8,d4
 		move.b	(\srcreg),d4
 		move.l	d4,a0
-		POP_SR
-		movem.l  (a7)+,d0-d4
+		;POP_SR
+		;movem.l  (a7)+,d0-d4
 		endm
 		
 		macro RAM_ADDR_REG srcreg
@@ -228,23 +228,23 @@
 		bsr	get_address
 		lea	(a0,d1.w),a0
 		READ_LE_WORD	a0
-		bsr	get_address
+		;bsr	get_address
 		endm
 
 		macro GET_ADDRESS_Y	offset
 		GET_ADDRESS \offset
 		READ_LE_WORD	a0
-		bsr	get_address
+		;bsr	get_address
 		endm
 		
 		macro GET_ADDRESS_Y_ROM	offset
 		GET_ADDRESS \offset
 		READ_LE_WORD_ROM	a0
-		bsr	get_address
+		;bsr	get_address
 		endm
 		
 		macro GET_ADDRESS_Y_RAM	offset
 		GET_ADDRESS \offset
 		READ_LE_WORD_ROM	a0
-		bsr	get_address
+		;bsr	get_address
 		endm
